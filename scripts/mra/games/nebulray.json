@@ -1,0 +1,241 @@
+{
+ "set": "nebulray",
+ "description": "Nebulas Ray (World, NR2)",
+ "year": "1994",
+ "manufacturer": "Namco",
+ "rotate": 90,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": "ROM_START(nebulray) from MAME master 5c75784c namconb1.cpp; cross-checked against mame.exe 0.289 -listxml"
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr2_mprl.15b",
+     "offset": 2,
+     "length": 524288,
+     "crc": "0431b6d4",
+     "sha1": "54c96e8ac9e753956c31bdef79d390f1c20e10ff"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr2_mpru.13b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "049b97cb",
+     "sha1": "0e344b29a4d4bdc854fa9849589772df2eeb0a05"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-spr0",
+     "offset": 0,
+     "length": 131072,
+     "crc": "1cc2b44b",
+     "sha1": "161f4ed39fabe89d7ee1d539f8b9f08cd0ff3111"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-voi0",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "332d5e26",
+     "sha1": "9daddac3fbe0709e25ed8e0b456bac15bfae20d7"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj0l",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "0e99ef46",
+     "sha1": "450fe61e448270b633f312361bd5ca89bb9684dd"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj0u",
+     "offset": 2,
+     "length": 2097152,
+     "crc": "fb82a881",
+     "sha1": "c9fa0728a37376a5c85bff1f6e8400c13ce15769"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj1l",
+     "offset": 4194304,
+     "length": 2097152,
+     "crc": "f7a898f0",
+     "sha1": "a25a134a42adeb9088019bde42a96d120f20407e"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj1u",
+     "offset": 4194306,
+     "length": 2097152,
+     "crc": "49d9dbd7",
+     "sha1": "2dbd842c192d65888f931cdb5c9387127b1ab632"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj2l",
+     "offset": 8388608,
+     "length": 2097152,
+     "crc": "b39871d1",
+     "sha1": "a8f910702bb88a001f2bfd1b33ad355aa3b0f429"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj2u",
+     "offset": 8388610,
+     "length": 2097152,
+     "crc": "8c8205b1",
+     "sha1": "2c5fb9392d8cd5f8d1f9aba6ddbbafd061271cd4"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj3l",
+     "offset": 12582912,
+     "length": 2097152,
+     "crc": "c90d13ae",
+     "sha1": "675f7b8b3325aac91b2bae1cbebe274a65aedc43"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "nr1obj3u",
+     "offset": 12582914,
+     "length": 2097152,
+     "crc": "d5918c9e",
+     "sha1": "530781fb44d7bbf01669bb265b658cb60e27bcd7"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr0",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "8d5b54ea",
+     "sha1": "616d5729f474da91da19a8246066280652da998c"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr1",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "cd21630c",
+     "sha1": "9974c0eb1051ca52f001e6631264a1936bb50620"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr2",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "70a11023",
+     "sha1": "bead486a86bd96c6fdfd2ea4d4d37c38bbe9bfbb"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr3",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "8f4b1d51",
+     "sha1": "b48fb2c8ccd9105a5b48be44dd3fe4309769efa4"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-sha0",
+     "offset": 0,
+     "length": 524288,
+     "crc": "ca667e13",
+     "sha1": "685032603224cb81bcb85361921477caec570d5e"
+    }
+   ]
+  },
+  {
+   "tag": "proms",
+   "size": 32,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c366.bin",
+     "offset": 0,
+     "length": 32,
+     "crc": "8c96f31d",
+     "sha1": "d186859cfc19a63266084372080d0a5bee687ae2"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 1,
+   "id": 366,
+   "id_word": 3,
+   "rnd_word": 7,
+   "part": "C366",
+   "source": "custom_key_r NAMCONB1_NEBULRAY (init_nebulray)"
+  }
+ }
+}
