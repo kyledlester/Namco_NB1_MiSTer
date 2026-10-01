@@ -113,9 +113,11 @@ NB-1 is Namco's mid-1990s 32-bit board:
 
 ### Known issues
 
-* In the very busiest scenes, the sprite chip can occasionally run out of
-  memory bandwidth and drop part of a sprite on a line (measured on 2 % of
-  frames during attract mode; usually unnoticeable).
+* In the very heaviest scenes (for example the big battleship in the attract
+  demo), the sprite chip can occasionally run out of memory time and leave a
+  short piece of one sprite line undrawn for a single frame. In the captured
+  test scenes this happens on a handful of lines in the heaviest frames only,
+  and it is very hard to notice at full speed.
 * Palette fades on the bottom two picture lines can differ slightly from MAME.
 
 ## Releases

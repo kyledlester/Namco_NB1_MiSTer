@@ -26,6 +26,13 @@ Lineage:
    Upstream 780 at 96.768 MHz would give 8.05 µs. Nothing else changed. Resulting blob SHA-1 (LF):
    `70acade132f64fb9a16daf487c5c27d7ee877c5e`.
 
+4. **NB-1 M23 delta (this repository):** a new output `ch1_taken`, a one-clock pulse the cycle after the
+   controller takes a latched ch1 request (the cycle it issues ACTIVE). After that the controller no longer reads
+   `ch1_addr`/`ch1_din`/`ch1_be`/`ch1_rnw`, so `nb1_memory` (PIPE = 1) may pulse the next request then and the
+   next ACTIVE follows the previous burst with no front-end turnaround. A pulse in the very cycle a request is
+   taken would be lost (the IDLE branch clears `ch1_rq` after the OR-latch), which is why the front end waits
+   for `ch1_taken`. Nothing else changed; an unconnected `ch1_taken` gives the upstream behaviour.
+
 The file keeps its original copyright and GPL-3.0-or-later notice.
 
 ### Simulation note

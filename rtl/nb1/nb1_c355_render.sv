@@ -29,6 +29,10 @@
 //            by ceil(2^27/k); 2^20/n is a ROM (1024 x 21).
 //   fetcher  one or two 8-byte OBJ reads (the halves of the 16-pixel source
 //            row that the span samples) as nb1_memory client, lowest priority.
+//            M23: two job slots in a ring and up to two reads outstanding
+//            (nb1_memory PIPE), so the reads of consecutive halves and jobs
+//            follow each other at the controller's pace; jobs are handed to
+//            the writer in list order, exactly as before.
 //   writer   one pixel per clk_sys; pen $FF transparent; entry =
 //            pri << 12 | (palette*256 + pixel); $FFFF = empty.
 // M20 native (game) flip [INFERRED, docs/M20_RESEARCH.md]: C355 position word 2 ($620004), which MAME
@@ -231,6 +235,7 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
     reg        frame_on = 1'b0;       // a committed frame is being drawn
     reg [7:0]  drops_cur = '0;        // lines abandoned in the frame being drawn
     wire [8:0] disp_next = (vcount == 9'd263) ? 9'd0 : vcount + 9'd1;
+    wire abandon_now = line_end && frame_on && disp_next < 9'd224 && {1'b0, rline} == disp_next;   // M23
 
     // ------------------------------------------------------------ walker
     localparam [4:0] W_IDLE = 5'd0, W_SRD = 5'd1, W_SWT = 5'd2, W_SA = 5'd3, W_SB = 5'd4, W_SC = 5'd5,
@@ -330,14 +335,25 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
     wire      jf_pop;
 
     // ------------------------------------------------------------ fetcher
-    localparam [2:0] F_IDLE = 3'd0, F_LO = 3'd1, F_LOW = 3'd2, F_HI = 3'd3, F_HIW = 3'd4, F_HAND = 3'd5;
-    reg [2:0]    fst = F_IDLE;
-    reg [JW-1:0] fj = '0;
-    reg [127:0]  fdata = '0;
-    reg          outstanding = 1'b0, discard = 1'b0;
-    wire         mem_pending = mreq_valid || outstanding;
-    wire         rsp_mine = outstanding && mrsp_valid;
+    // M23: slot s holds job fsj[s] and its row fsd[s]; fs_need = halves still to be issued
+    // {lo, hi}; fs_wait = halves issued and not yet answered. flp = next slot to load,
+    // fip = slot being issued, fhp = next slot for the writer (all advance in ring order).
+    reg [JW-1:0] fsj [0:1];
+    reg [127:0]  fsd [0:1];
+    reg [1:0]    fs_full = '0;
+    reg [1:0]    fs_need [0:1];
+    reg [1:0]    fs_wait [0:1];
+    reg          flp = 1'b0, fip = 1'b0, fhp = 1'b0;
+    reg [1:0]    ftq [0:1];                      // issued reads in order: {slot, half (1 = hi)}
+    reg          ftq_rd = 1'b0, ftq_wr = 1'b0;
+    reg [1:0]    f_out = '0;                    // accepted by nb1_memory, not yet answered
+    reg [1:0]    f_disc = '0;                     // oldest responses to drop (abandoned line)
+    wire         mem_pending = mreq_valid || (f_out != 2'd0);
+    wire         rsp_mine = (f_out != 2'd0) && mrsp_valid;
+    wire         slot_rdy = fs_full[fhp] && (fs_need[fhp] == 2'd0) && (fs_wait[fhp] == 2'd0);
+    wire         fetch_idle = (fs_full == 2'd0);
     reg  [15:0]  fetch_cnt = '0;
+    initial begin fs_need[0] = '0; fs_need[1] = '0; fs_wait[0] = '0; fs_wait[1] = '0; end
 
     // ------------------------------------------------------------ writer
     reg          wr_busy = 1'b0;
@@ -355,10 +371,10 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
     assign wr_on   = wr_busy && !dclr && (wr_pix != 8'hFF);
     assign wr_addr = {wr_slot, wr_a};
     assign wr_data = {wr_pri, wr_col, wr_pix};
-    wire   wr_load = !wr_busy && (fst == F_HAND);
-    assign jf_pop  = (fst == F_IDLE) && !jf_empty && !mem_pending && line_active;
+    wire   wr_load = !wr_busy && slot_rdy;
+    assign jf_pop  = !fs_full[flp] && !jf_empty && line_active;
 
-    wire line_done = line_active && (wst == W_DONE) && jf_empty && (fst == F_IDLE) && !wr_busy && !mem_pending;
+    wire line_done = line_active && (wst == W_DONE) && jf_empty && fetch_idle && !wr_busy && !mem_pending;
 
     always @(posedge clk_sys) begin
         desc_we <= 1'b0;
@@ -451,12 +467,7 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
         endcase
 
         // ========================================================== memory port
-        if (mreq_valid && mreq_ready) begin mreq_valid <= 1'b0; outstanding <= 1'b1; end
-        if (rsp_mine) begin
-            outstanding <= 1'b0;
-            discard     <= 1'b0;
-            if (mrsp_err && !discard) mem_error <= 1'b1;
-        end
+        // (M23: the outstanding count, the tag queue and the discards are kept by the fetcher below)
 
         // ========================================================== job FIFO
         if (jf_push) begin
@@ -725,51 +736,68 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
         endcase
 
         // ========================================================== fetcher
-        case (fst)
-            F_IDLE: if (jf_pop) begin
-                fj  <= jf_head;
-                fst <= jf_head[1] ? F_LO : F_HI;
+        begin : fetcher
+            logic f_acc, f_use;
+            logic [1:0] f_th;
+            f_acc = mreq_valid && mreq_ready;
+            f_use = rsp_mine && (f_disc == 2'd0);
+            f_th = ftq[ftq_rd];
+            if (f_acc) mreq_valid <= 1'b0;
+            f_out <= f_out + (f_acc ? 2'd1 : 2'd0) - (rsp_mine ? 2'd1 : 2'd0);
+            if (rsp_mine && f_disc != 2'd0) f_disc <= f_disc - 2'd1;
+            // load: next job into the free slot at flp
+            if (jf_pop) begin
+                fsj[flp]     <= jf_head;
+                fs_need[flp] <= jf_head[1:0];
+                fs_full[flp] <= 1'b1;
+                flp         <= !flp;
             end
-            F_LO: if (!mem_pending) begin
+            // issue: at most two reads at nb1_memory (posted + accepted)
+            if (!mreq_valid && !abandon_now && (f_out - (rsp_mine ? 2'd1 : 2'd0)) < 2'd2 && fs_full[fip] && fs_need[fip] != 2'd0) begin
                 mreq_valid  <= 1'b1;
-                mreq_offset <= {1'b0, fj[JW-1 -: 16], fj[JW-17 -: 4], 4'd0};
+                mreq_offset <= {1'b0, fsj[fip][JW-1 -: 16], fsj[fip][JW-17 -: 4], fs_need[fip][1] ? 4'd0 : 4'd8};
                 fetch_cnt   <= fetch_cnt + 16'd1;
-                fst <= F_LOW;
+                ftq[ftq_wr]   <= {fip, !fs_need[fip][1]};
+                ftq_wr       <= !ftq_wr;
+                if (fs_need[fip][1]) begin
+                    fs_need[fip][1] <= 1'b0; fs_wait[fip][1] <= 1'b1;
+                    if (!fs_need[fip][0]) fip <= !fip;
+                end else begin
+                    fs_need[fip][0] <= 1'b0; fs_wait[fip][0] <= 1'b1;
+                    fip <= !fip;
+                end
             end
-            F_LOW: if (rsp_mine && !discard) begin
-                fdata[127:64] <= mrsp_err ? 64'hFFFF_FFFF_FFFF_FFFF : mrsp_line;
-                fst <= fj[0] ? F_HI : F_HAND;
+            // response: in issue order
+            if (f_use) begin
+                ftq_rd <= !ftq_rd;
+                if (mrsp_err) mem_error <= 1'b1;
+                if (f_th[0]) fsd[f_th[1]][63:0]   <= mrsp_err ? 64'hFFFF_FFFF_FFFF_FFFF : mrsp_line;
+                else       fsd[f_th[1]][127:64] <= mrsp_err ? 64'hFFFF_FFFF_FFFF_FFFF : mrsp_line;
+                fs_wait[f_th[1]][f_th[0] ? 0 : 1] <= 1'b0;
             end
-            F_HI: if (!mem_pending) begin
-                mreq_valid  <= 1'b1;
-                mreq_offset <= {1'b0, fj[JW-1 -: 16], fj[JW-17 -: 4], 4'd8};
-                fetch_cnt   <= fetch_cnt + 16'd1;
-                fst <= F_HIW;
+            // hand-off to the writer (list order)
+            if (wr_load) begin
+                fs_full[fhp] <= 1'b0;
+                fhp         <= !fhp;
             end
-            F_HIW: if (rsp_mine && !discard) begin
-                fdata[63:0] <= mrsp_err ? 64'hFFFF_FFFF_FFFF_FFFF : mrsp_line;
-                fst <= F_HAND;
-            end
-            F_HAND: if (!wr_busy) fst <= F_IDLE;
-            default: fst <= F_IDLE;
-        endcase
+        end
 
         // ========================================================== writer
         if (wr_load) begin
             wr_busy <= 1'b1;
             // {code16, srow4, x0 10, x1 10, xi 21, step 21, fx, col4, pri4, halves2}
-            wr_x    <= fj[JW-21 -: 10];
-            wr_x1   <= fj[JW-31 -: 10];
-            wr_xi   <= fj[JW-41 -: 21];
-            wr_step <= fj[JW-62 -: 21];
-            wr_fx   <= fj[10];
-            wr_col  <= fj[9:6];
-            wr_pri  <= fj[5:2];
-            wr_row  <= fdata;
+            wr_x    <= fsj[fhp][JW-21 -: 10];
+            wr_x1   <= fsj[fhp][JW-31 -: 10];
+            wr_xi   <= fsj[fhp][JW-41 -: 21];
+            wr_step <= fsj[fhp][JW-62 -: 21];
+            wr_fx   <= fsj[fhp][10];
+            wr_col  <= fsj[fhp][9:6];
+            wr_pri  <= fsj[fhp][5:2];
+            wr_row  <= fsd[fhp];
             wr_slot <= rline[1:0];
             wr_mx   <= flx;
             wr_zc   <= zc;
-            wr_a    <= flx ? 9'(10'd436 - fj[JW-21 -: 10]) : fj[JW-22 -: 9];   // x0 low 9 bits
+            wr_a    <= flx ? 9'(10'd436 - fsj[fhp][JW-21 -: 10]) : fsj[fhp][JW-22 -: 9];   // x0 low 9 bits
         end else if (wr_busy && !dclr) begin
             if (wr_zc) begin
                 // continuous: saturate at both ends (the span ends are clamped to the tile)
@@ -798,9 +826,11 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
             if (frame_on && disp_next < 9'd224 && {1'b0, rline} == disp_next) begin
                 if (drops != 16'hFFFF) drops <= drops + 16'd1;
                 if (drops_cur != 8'hFF) drops_cur <= drops_cur + 8'd1;
-                discard     <= mreq_valid || (outstanding && !mrsp_valid);
+                // M23: every read still owed to this line (posted or accepted) is dropped on return
+                f_disc  <= f_out + (mreq_valid ? 2'd1 : 2'd0) - (rsp_mine ? 2'd1 : 2'd0);
+                fs_full <= '0; flp <= 1'b0; fip <= 1'b0; fhp <= 1'b0; ftq_rd <= 1'b0; ftq_wr <= 1'b0;
+                fs_need[0] <= '0; fs_need[1] <= '0; fs_wait[0] <= '0; fs_wait[1] <= '0;
                 jf_rd <= '0; jf_wr <= '0; jf_cnt <= '0;
-                fst         <= F_IDLE;
                 wr_busy     <= 1'b0;
                 wst         <= W_IDLE;
                 line_active <= 1'b0;
@@ -839,9 +869,11 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
         end
 
         if (reset) begin
-            cst <= C_IDLE; wst <= W_IDLE; fst <= F_IDLE;
+            cst <= C_IDLE; wst <= W_IDLE;
+            fs_full <= '0; flp <= 1'b0; fip <= 1'b0; fhp <= 1'b0; ftq_rd <= 1'b0; ftq_wr <= 1'b0;
+            fs_need[0] <= '0; fs_need[1] <= '0; fs_wait[0] <= '0; fs_wait[1] <= '0; f_out <= '0; f_disc <= '0;
             frame_on <= 1'b0; line_active <= 1'b0;
-            mreq_valid <= 1'b0; outstanding <= 1'b0; discard <= 1'b0;
+            mreq_valid <= 1'b0;
             jf_rd <= '0; jf_wr <= '0; jf_cnt <= '0;
             wr_busy <= 1'b0;
             count_s[0] <= '0; count_s[1] <= '0; dcount <= '0;

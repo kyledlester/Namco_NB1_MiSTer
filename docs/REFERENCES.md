@@ -6,7 +6,7 @@
 | --- | --- | --- | --- |
 | TG68K.C 68020 core | `rtl/vendor/tg68k/` | [TobiFlex/TG68K.C](https://github.com/TobiFlex/TG68K.C) by Tobias Gubener and contributors, commit `ade33e3`, unmodified (see `rtl/vendor/tg68k/README.md`) | LGPL-3.0-or-later |
 | M37702 CPU core and M37702M2 peripherals (C75) | `rtl/vendor/m37702/` | The author's [Namco_NA1_NA2_MiSTer](https://github.com/kyledlester/Namco_NA1_NA2_MiSTer) core, with two documented local modifications (see `rtl/vendor/README.md`) | GPL-3.0-or-later |
-| SDRAM controller | `rtl/vendor/sdram.sv` | [MiSTer-devel/GBA_MiSTer](https://github.com/MiSTer-devel/GBA_MiSTer), with byte enables (via the NA-1/NA-2 core) and a refresh-interval parameter (see `rtl/vendor/README.md`) | GPL-3.0-or-later |
+| SDRAM controller | `rtl/vendor/sdram.sv` | [MiSTer-devel/GBA_MiSTer](https://github.com/MiSTer-devel/GBA_MiSTer), with byte enables (via the NA-1/NA-2 core), a refresh-interval parameter and a request-taken output (see `rtl/vendor/README.md`) | GPL-3.0-or-later |
 | CRT Adjust | `rtl/vendor/crt_adjust.sv` | MiSTer-CRT-Adjust by Umberto Parisi (rmonic79) with Andrea Bogazzi, unmodified | GPL-3.0-or-later |
 | MiSTer framework | `sys/` | [MiSTer-devel/Template_MiSTer](https://github.com/MiSTer-devel/Template_MiSTer) | see `LICENSE.MiSTer` and file headers |
 

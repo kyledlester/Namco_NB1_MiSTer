@@ -33,7 +33,10 @@
 //   writer   8 pixels per tile row into the line buffer, 1 per clk_sys,
 //            opaque and on-screen pixels only (painter's order = MAME order).
 // Job FIFO (4) between walker and fetcher; a single nb1_memory client port
-// (one request outstanding) shared by walker (SHAPE, first) and fetcher.
+// shared by walker (SHAPE, first) and fetcher. M23: up to two reads
+// outstanding (nb1_memory PIPE); a tag queue routes the in-order responses
+// (SHAPE to the walker, CHR into a 2-entry completed-row queue that feeds the
+// writer), so consecutive CHR reads follow each other at the controller's pace.
 //
 // Line buffer: 2 x 512 x 16, one simple dual-port M10K array (2 blocks):
 // the read port belongs to the display; the write port to the writer, except
@@ -181,20 +184,32 @@ module nb1_c123_render (
     wire       f_pop;
 
     // --------------------------------------------------------- memory port
-    reg        outstanding = 1'b0;
-    reg        owner = 1'b0;        // 0 = walker (SHAPE), 1 = fetcher (CHR)
-    reg        discard = 1'b0;
-    wire       mem_pending = mreq_valid || outstanding;
-    wire       rsp_mine = outstanding && mrsp_valid;
+    // M23: reads in flight, in issue order: {CHR (1) / SHAPE (0), CHR job}
+    reg [43:0] tg [0:1];
+    reg        tg_rd = 1'b0, tg_wr = 1'b0;
+    reg [1:0]  t_out = '0;          // accepted by nb1_memory, not yet answered
+    reg [1:0]  t_chr = '0;          // CHR reads posted or accepted, not yet answered (and not dropped)
+    reg [1:0]  t_disc = '0;         // oldest responses to drop (abandoned line)
+    wire       mem_pending = mreq_valid || (t_out != 2'd0);
+    wire       rsp_mine = (t_out != 2'd0) && mrsp_valid;
+    wire       rsp_use  = rsp_mine && (t_disc == 2'd0);
+    wire [43:0] tg_head = tg[tg_rd];
+    wire       rsp_chr  = rsp_use && tg_head[43];
+    wire       rsp_shp  = rsp_use && !tg_head[43];
+    // room for one more read at nb1_memory: nothing posted, fewer than two accepted after this cycle
+    wire       port_room = !mreq_valid && ((t_out - (rsp_mine ? 2'd1 : 2'd0)) < 2'd2);
     wire       walker_wants = (wst == W_SLOOK) && !sc_hit;
 
     // ------------------------------------------------------------- fetcher
-    // The job leaves the FIFO when its CHR read is issued (fj = job in flight),
-    // so the next read can be issued as soon as this one is answered.
-    localparam [1:0] F_IDLE = 2'd0, F_WAIT = 2'd1, F_HAND = 2'd2;
-    reg [1:0]  fst = F_IDLE;
-    reg [63:0] f_data = '0;
-    reg [42:0] fj = '0;
+    // The job leaves the FIFO when its CHR read is issued (it then travels in the
+    // tag queue); the answered row waits in the completed-row queue for the writer.
+    // M23: a CHR read is issued only if its row will have a place: answered-and-
+    // waiting rows + CHR reads in flight < 2.
+    reg [42:0] dq_job [0:1];
+    reg [63:0] dq_data [0:1];
+    reg        dq_rd = 1'b0, dq_wr = 1'b0;
+    reg [1:0]  dq_cnt = '0;
+    wire [42:0] fj = dq_job[dq_rd];
 
     // -------------------------------------------------------------- writer
     reg        wr_busy = 1'b0;
@@ -236,7 +251,7 @@ module nb1_c123_render (
 
     // ----------------------------------------------------------- completion
     wire walker_done = (wst == W_DONE);
-    wire line_done   = line_active && walker_done && f_empty && (fst == F_IDLE) && !wr_busy && !mem_pending;
+    wire line_done   = line_active && walker_done && f_empty && (dq_cnt == 2'd0) && !wr_busy && !mem_pending;
     wire busy_now    = line_active && !line_done;
     assign line_busy = busy_now;
 
@@ -260,27 +275,35 @@ module nb1_c123_render (
     wire   push_fill = (wst == W_PUSH) && (t_mask != 8'd0);
     wire [7:0] push_mask = push_hit ? hit_mask : t_mask;
     assign f_push = (push_hit || push_fill) && !f_full && line_active;
-    wire   f_issue = (fst == F_IDLE) && !f_empty && !mem_pending && !walker_wants && line_active;
+    wire   t_abandon = line_end && wst != W_CLEAR && busy_now;   // M23: this line_end abandons the line
+    wire   f_issue = !f_empty && port_room && ({1'b0, dq_cnt} + {1'b0, t_chr} < 3'd2) && !walker_wants && line_active && !t_abandon;
     assign f_pop  = f_issue;
     assign sc_ra  = (wst == W_CODE) ? vram_data[8:0] : sc_raddr;
-    // writer load: the answered job, straight from F_WAIT or held in F_HAND
-    wire   wr_load = !wr_busy && ((fst == F_HAND) || ((fst == F_WAIT) && rsp_mine && !discard && owner));
-    wire [63:0] wr_load_data = (fst == F_HAND) ? f_data : (mrsp_err ? 64'd0 : mrsp_line);
+    // writer load: the oldest answered row
+    wire   wr_load = !wr_busy && (dq_cnt != 2'd0);
+    wire [63:0] wr_load_data = dq_data[dq_rd];
 
     integer n;
     always @(posedge clk_sys) begin
         sc_we <= 1'b0;
 
         // ---------------------------------------------------- memory handshake
-        if (mreq_valid && mreq_ready) begin
-            mreq_valid  <= 1'b0;
-            outstanding <= 1'b1;
+        if (mreq_valid && mreq_ready) mreq_valid <= 1'b0;
+        t_out <= t_out + ((mreq_valid && mreq_ready) ? 2'd1 : 2'd0) - (rsp_mine ? 2'd1 : 2'd0);
+        if (rsp_mine && t_disc != 2'd0) t_disc <= t_disc - 2'd1;
+        if (rsp_use) begin
+            tg_rd <= !tg_rd;
+            if (mrsp_err) mem_error <= 1'b1;
         end
-        if (rsp_mine) begin
-            outstanding <= 1'b0;
-            discard     <= 1'b0;
-            if (mrsp_err && !discard) mem_error <= 1'b1;
+        // completed-row queue: CHR responses in, writer loads out
+        if (rsp_chr) begin
+            dq_job[dq_wr]  <= tg_head[42:0];
+            dq_data[dq_wr] <= mrsp_err ? 64'd0 : mrsp_line;
+            dq_wr <= !dq_wr;
         end
+        if (wr_load) dq_rd <= !dq_rd;
+        dq_cnt <= dq_cnt + (rsp_chr ? 2'd1 : 2'd0) - (wr_load ? 2'd1 : 2'd0);
+        t_chr  <= t_chr + (f_issue ? 2'd1 : 2'd0) - (rsp_chr ? 2'd1 : 2'd0);
 
         // ------------------------------------------------------------- FIFO
         if (f_push) begin
@@ -350,16 +373,17 @@ module nb1_c123_render (
                         tk  <= tk + 6'd1;
                         wst <= W_TILE;
                     end
-                end else if (!mem_pending) begin
+                end else if (port_room && !t_abandon) begin
                     mreq_valid  <= 1'b1;
                     mreq_region <= REG_SHAPE;
                     mreq_offset <= {6'd0, t_code, 3'b000};
-                    owner       <= 1'b0;
+                    tg[tg_wr]   <= {1'b0, 43'd0};
+                    tg_wr       <= !tg_wr;
                     shape_cnt   <= shape_cnt + 16'd1;
                     wst         <= W_SFILL;
                 end
             end
-            W_SFILL: if (rsp_mine && !discard && !owner) begin
+            W_SFILL: if (rsp_shp) begin
                 sc_we    <= 1'b1;
                 sc_waddr <= t_code[8:0];
                 sc_wdata <= {!mrsp_err, t_code[15:9], mrsp_line};
@@ -376,23 +400,14 @@ module nb1_c123_render (
         endcase
 
         // ----------------------------------------------------------- fetcher
-        case (fst)
-            F_IDLE: if (f_issue) begin
-                mreq_valid  <= 1'b1;
-                mreq_region <= REG_CHR;
-                mreq_offset <= {3'd0, f_head[18:3], f_head[2:0], 3'b000};
-                owner       <= 1'b1;
-                fj          <= f_head;
-                chr_cnt     <= chr_cnt + 16'd1;
-                fst         <= F_WAIT;
-            end
-            F_WAIT: if (rsp_mine && !discard && owner) begin
-                f_data <= mrsp_err ? 64'd0 : mrsp_line;
-                fst    <= wr_busy ? F_HAND : F_IDLE;
-            end
-            F_HAND: if (!wr_busy) fst <= F_IDLE;
-            default: fst <= F_IDLE;
-        endcase
+        if (f_issue) begin
+            mreq_valid  <= 1'b1;
+            mreq_region <= REG_CHR;
+            mreq_offset <= {3'd0, f_head[18:3], f_head[2:0], 3'b000};
+            tg[tg_wr]   <= {1'b1, f_head};
+            tg_wr       <= !tg_wr;
+            chr_cnt     <= chr_cnt + 16'd1;
+        end
 
         // ------------------------------------------------------------ writer
         if (wr_load) begin
@@ -423,9 +438,11 @@ module nb1_c123_render (
         if (line_end && wst != W_CLEAR && busy_now) begin
             if (underruns != 16'hFFFF) underruns <= underruns + 16'd1;
             worst_cnt   <= 16'hFFFF;
-            discard     <= mreq_valid || (outstanding && !mrsp_valid);
+            // M23: every read still owed to this line (posted or accepted) is dropped on return
+            t_disc <= t_out + (mreq_valid ? 2'd1 : 2'd0) - (rsp_mine ? 2'd1 : 2'd0);
+            tg_rd <= 1'b0; tg_wr <= 1'b0; t_chr <= '0;
+            dq_rd <= 1'b0; dq_wr <= 1'b0; dq_cnt <= '0;
             f_rd <= '0; f_wr <= '0; f_cnt <= '0;
-            fst         <= F_IDLE;
             wr_busy     <= 1'b0;
             line_active <= 1'b0;
             wst         <= W_IDLE;
@@ -466,10 +483,9 @@ module nb1_c123_render (
             clr_idx     <= '0;
             line_active <= 1'b0;
             mreq_valid  <= 1'b0;
-            outstanding <= 1'b0;
-            discard     <= 1'b0;
+            t_out <= '0; t_disc <= '0; t_chr <= '0; tg_rd <= 1'b0; tg_wr <= 1'b0;
+            dq_rd <= 1'b0; dq_wr <= 1'b0; dq_cnt <= '0;
             f_rd <= '0; f_wr <= '0; f_cnt <= '0;
-            fst         <= F_IDLE;
             wr_busy     <= 1'b0;
             chr_cnt     <= '0;
             shape_cnt   <= '0;

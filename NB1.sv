@@ -305,6 +305,11 @@ wire mem_init = ~pll_locked;
 // walker's short request gaps (SHAPE-miss / empty-row runs) and cost tile lines
 // on hardware (section 9.10). The sprite client keeps its request stable and is
 // granted later; the client contract is unchanged.
+// M23: the tile and sprite renderers keep two reads queued, so the M2 front end (PIPE = 0) is
+// never left waiting for their next request: the heaviest battleship frames drop 10 sprite lines
+// instead of 124 (sim). The pipelined front end (PIPE = 1, 0 drops in sim) hung the ROM download
+// on hardware in one placement (7 of 7 loads) while the same logic with debug outputs worked;
+// it stays in nb1_memory for a later milestone (docs/M23_IMPLEMENTATION.md).
 localparam int MEM_CLIENTS = 6;
 
 // Program line buffer (nb1_main_bus): 2**M3_LINES_LOG2 lines of 8 bytes.
@@ -326,13 +331,13 @@ wire [31:0]               mrsp_rdata;
 wire [63:0]               mrsp_line;
 wire                      mrsp_err;
 
-wire        phy_req, phy_rnw, phy_ready;
+wire        phy_req, phy_rnw, phy_ready, phy_taken;   // phy_taken: M23
 wire [26:1] phy_addr;
 wire [15:0] phy_din;
 wire [1:0]  phy_be;
 wire [63:0] phy_dout;
 
-nb1_memory #(.CLIENTS(MEM_CLIENTS), .LOW_HOLD(2)) memory
+nb1_memory #(.CLIENTS(MEM_CLIENTS), .LOW_HOLD(2), .PIPE(1'b0)) memory   // M23: PIPE=0 (see MEM_CLIENTS above)
 (
 	.clk_sys(clk_sys),
 	.init(mem_init),
@@ -353,6 +358,7 @@ nb1_memory #(.CLIENTS(MEM_CLIENTS), .LOW_HOLD(2)) memory
 	.phy_din(phy_din),
 	.phy_be(phy_be),
 	.phy_ready(phy_ready),
+	.phy_taken(phy_taken),
 	.phy_dout(phy_dout),
 	.busy()
 );
@@ -381,6 +387,7 @@ sdram #(.CYCLES_PER_REFRESH(14'd755)) sdram
 	.ch1_req(phy_req),
 	.ch1_rnw(phy_rnw),
 	.ch1_ready(phy_ready),
+	.ch1_taken(phy_taken),
 	.ch2_addr(26'd0),
 	.ch2_dout(),
 	.ch2_din(32'd0),

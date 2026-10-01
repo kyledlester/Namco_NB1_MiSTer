@@ -81,7 +81,11 @@ board's 48.384 MHz crystal, with clock enables (`nb1_clock_enables.sv`):
 
 * `nb1_memory.sv`: the SDRAM front end, with fixed-priority clients (C75,
   program cache, tiles, sprites, ROM checker) on the MiSTer SDRAM controller
-  (`rtl/vendor/sdram.sv`).
+  (`rtl/vendor/sdram.sv`). The tile and sprite renderers keep their next read
+  queued, so the front end never waits for them between reads; that is what
+  lets the busy sprite scenes draw their lines in time. (`nb1_memory` also
+  contains a pipelined front end, `PIPE = 1`, which is not used in the release
+  build.)
 * `nb1_rom_loader.sv`: the ioctl ROM stream into SDRAM (stream offset = SDRAM
   address). `nb1_rom_check.sv` verifies every region against the MRA's check
   record.
