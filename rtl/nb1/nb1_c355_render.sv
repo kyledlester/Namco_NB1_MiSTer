@@ -194,6 +194,24 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
     wire [4:0] c_nrow = (cf[1][3:0] == 4'd0) ? 5'd16 : {1'b0, cf[1][3:0]};
     wire [15:0] c_taddr = ctbase + {7'd0, ck};
     wire        c_off   = (ca[4][9:0] == 10'd0) || (ca[5][9:0] == 10'd0);
+    // M25: far off-screen sprites need no cells. J-League Soccer V-Shoot draws its pitch as a 5 x 3 grid of
+    // 256 x 256 sprites (16 x 16 cells each) of which only ~4 are on screen: 4156 cells in a frame against
+    // CELLS = 4096, which would drop the last (topmost) sprites of the list. On an axis whose format offset
+    // (dx/dy, zoom-scaled by the walker) is 0 the screen position is exactly sext11(pos - xs/ys) (MAME
+    // get_single_sprite); a sprite more than 16 pixels outside the 288 x 224 screen on such an axis draws
+    // nothing (the margin also covers the position registers moving between this capture and the draw latch).
+    // It is stored like an out-of-space sprite: width 0, no cells.
+    wire signed [11:0] c_xs = sext9(pos_in[31:16]) + 12'sd38;
+    wire signed [11:0] c_ys = sext9(pos_in[15:0])  + 12'sd25;
+    wire [15:0]        c_hd = ca[2] - {{4{c_xs[11]}}, c_xs};
+    wire [15:0]        c_vd = ca[3] - {{4{c_ys[11]}}, c_ys};
+    wire signed [11:0] c_hp = {c_hd[10], c_hd[10:0]};                 // sext11
+    wire signed [11:0] c_vp = {c_vd[10], c_vd[10:0]};
+    wire signed [12:0] c_hr = c_hp + $signed({3'd0, ca[4][9:0]});     // right / bottom edge (exclusive)
+    wire signed [12:0] c_vb = c_vp + $signed({3'd0, ca[5][9:0]});
+    wire        c_far   = ((cf[2][7:0] == 8'd0) && (c_hp >= 12'sd304 || c_hr <= -13'sd16)) ||
+                          ((cf[3][7:0] == 8'd0) && (c_vp >= 12'sd240 || c_vb <= -13'sd16));
+    reg         cfar    = 1'b0;
 
     // ------------------------------------------------------------ display state
     reg        dbuf = 1'b0;           // buffer being displayed
@@ -275,6 +293,7 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
     reg signed [15:0] yy = '0, ty = '0;
     reg [48:0] mr = '0;
     reg [31:0] my = '0;
+    reg [9:0]  krow = '0;             // M25 (timing): the source-row index, registered one state before the multiply
     reg [3:0]  srow = '0;
     reg        rhit = 1'b0;                                     // W_RE -> W_RF: this row crosses the line
     // column loop
@@ -428,8 +447,9 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
             C_PREP: begin
                 // cell count and space check for this sprite, registered (timing)
                 // a disabled sprite (width or height 0) reads no cells, like MAME
-                cn     <= c_off ? 9'd0 : {4'd0, c_ncol} * {4'd0, c_nrow};
-                cskip  <= !c_off && ({1'b0, cptr} + {5'd0, c_ncol} * {5'd0, c_nrow} > CELLS);
+                cn     <= (c_off || c_far) ? 9'd0 : {4'd0, c_ncol} * {4'd0, c_nrow};
+                cskip  <= !c_off && !c_far && ({1'b0, cptr} + {5'd0, c_ncol} * {5'd0, c_nrow} > CELLS);
+                cfar   <= c_far;
                 ctbase <= 16'h4000 + cf[0];
                 cst    <= C_CELL;
             end
@@ -449,7 +469,7 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
                 desc_we    <= 1'b1;
                 desc_waddr <= {cbuf, cidx};
                 // an out-of-space sprite is stored with width 0 (drawn as disabled)
-                desc_wdata <= {ca[2][10:0], ca[3][10:0], ca[4][15], (cskip ? 10'd0 : ca[4][9:0]), ca[5][15], ca[5][9:0],
+                desc_wdata <= {ca[2][10:0], ca[3][10:0], ca[4][15], ((cskip || cfar) ? 10'd0 : ca[4][9:0]), ca[5][15], ca[5][9:0],
                                ca[6][11:0], ca[1], cf[1][7:0], cf[2][8:0], cf[3][8:0], 12'(cptr)};
                 if (cskip) c_ovf <= 1'b1;
                 else cptr <= cptr + CELL_AW'(cn);
@@ -579,12 +599,17 @@ module nb1_c355_render #(parameter int CELL_AW = 12) (
                 end else if (rcur + 5'd1 == nrow) wst <= W_NEXTS;
                 else wst <= W_RQ;
             end
-            W_RDY: wst <= W_RDW;
-            W_RDW: begin : rdw
+            W_RDY: begin : rdy
                 // source row = (fy ? sh-1-k : k) * (2^20 / sh) >> 16, k = line - ty
+                // M25 (timing): k and the flip are formed here, while the reciprocal is read; the multiply
+                // follows alone in W_RDW (ln, ty, sh and fy do not change between the two states)
                 reg [9:0] k;
-                k   = 10'(ln - ty);
-                my  <= {1'b0, (fy ? sh - 10'd1 - k : k)} * rc_q;
+                k    = 10'(ln - ty);
+                krow <= fy ? sh - 10'd1 - k : k;
+                wst  <= W_RDW;
+            end
+            W_RDW: begin
+                my  <= {1'b0, krow} * rc_q;
                 wst <= W_RY;
             end
             W_RY: begin

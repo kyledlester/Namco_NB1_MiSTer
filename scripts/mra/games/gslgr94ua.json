@@ -1,0 +1,227 @@
+{
+ "set": "gslgr94ua",
+ "parent": "gslgr94u",
+ "description": "Great Sluggers '94 (prototype?)",
+ "year": "1994",
+ "manufacturer": "Namco",
+ "rotate": 0,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": ""
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "prg_l.15b",
+     "offset": 2,
+     "length": 524288,
+     "crc": "d41b1692",
+     "sha1": "4790df8fb2ffd796d375e4092de848da091adfa5"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "prg_u.13b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "798276a0",
+     "sha1": "cc062427cbbee66c61a6e321bfec3995bb43a909"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "snd_prg_3.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "d9871f03",
+     "sha1": "203085c979ca3104179db0841c2ca91fed4590dd"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "voice_3.bin",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "d3480574",
+     "sha1": "0c468ed060769b36b7e41cf4919cb6d8691d64f6"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_a1_3.1a",
+     "offset": 0,
+     "length": 524288,
+     "crc": "19cb42a0",
+     "sha1": "27a6f42de6426912c2d5cc166a5654010bd40e9f"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_b1_3.1b",
+     "offset": 1,
+     "length": 524288,
+     "crc": "3d179f07",
+     "sha1": "9debb31c2c782293c3ff673b05691bf81fb955ea"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_c1_3.1c",
+     "offset": 2,
+     "length": 524288,
+     "crc": "90922cb0",
+     "sha1": "a8feaf7a45c9e783dd04792a5b304eaeb70a7268"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_d1_3.1d",
+     "offset": 3,
+     "length": 524288,
+     "crc": "5ffbd032",
+     "sha1": "78dc529b47822eeb1320fa2561005e718df53c8c"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_a2_3.2a",
+     "offset": 2097152,
+     "length": 524288,
+     "crc": "9de63c10",
+     "sha1": "731e90db98c66d034e12dc783f297992ae65c6f8"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_b2_3.2b",
+     "offset": 2097153,
+     "length": 524288,
+     "crc": "563548a0",
+     "sha1": "44f19e4841a8a71a14dc976c66d37fcbd575536a"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_c2.2c",
+     "offset": 2097154,
+     "length": 524288,
+     "crc": "022c2101",
+     "sha1": "8345be95f5d51f200b214954cfcb2efed5aeac46"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "obj_d2.2d",
+     "offset": 2097155,
+     "length": 524288,
+     "crc": "1d84f241",
+     "sha1": "1a291a12534da239889881f02645c3fe5bce9d77"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "chr0.bin",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "9314085d",
+     "sha1": "150e8ea908861337f9be2749aa7f9e1d52570586"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "chr1.bin",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "c128a887",
+     "sha1": "4faf78064dd48ec50684a7dc8d120f8c5985bf2a"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "chr2.bin",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "48f0a311",
+     "sha1": "e39adcce835542e64ca87f6019d4a85fcbe388c2"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "chr3.bin",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "adbd1f88",
+     "sha1": "3c7bb1a9a398412bd3c98cadf8ce63a16e2bfed5"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "shape_3",
+     "offset": 0,
+     "length": 524288,
+     "crc": "6b2beabb",
+     "sha1": "815f7aef44735584edd4a9ca7e672471d07f225e"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 1,
+   "id": 369,
+   "id_word": 6,
+   "rnd_word": 7,
+   "part": "C369",
+   "source": "custom_key_r NAMCONB1_GSLGR94J (init_gslgr94j)"
+  },
+  "io": "none"
+ }
+}

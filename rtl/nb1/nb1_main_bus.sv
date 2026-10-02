@@ -111,6 +111,8 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
     input  wire [15:0] c75sh_wdata,
     input  wire [1:0]  c75sh_be,
     output wire [15:0] c75sh_rdata,
+    // M25: misc read ports -- the gun I/O board counts {X p1, Y p1, X p2, Y p2} (nb1_gun; 0 without one)
+    input  wire [31:0] gun_counts,
     output reg         c75_run = 1'b0,      // $400018 bit 0 (1 = released)
     output reg         c75_restart = 1'b0,  // one-cycle pulse on every write of 1
     output reg  [7:0]  c75_ctl_writes = '0, // $400018 writes since CPU reset
@@ -257,7 +259,29 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
     wire        is_obank = (cls == CLS_SPRBANK);
     wire        is_eep   = (cls == CLS_EEPROM);
     wire        is_kc    = (cls == CLS_KEYCUS);
-    wire        is_sync  = is_ram || is_c116 || is_c123 || is_tmctl || is_eep || is_kc || is_obj || is_opos || is_obank;
+    wire        is_misc  = (cls == CLS_RNG);
+    wire        is_sync  = is_ram || is_c116 || is_c123 || is_tmctl || is_eep || is_kc || is_obj || is_opos || is_obank || is_misc;
+
+    // M25: CLS_RNG = the random generator $1E4000-$1E4003 [MAME-SOURCE randgen_r: machine().rand(), a new
+    // value per read; srand_w a no-op] -- here a free-running 32-bit LFSR, so successive reads differ --
+    // and the gun I/O board $100000-$10001F [MAME-SOURCE gunbulet_state::gun_r: the byte at $100000 + 4n,
+    // n = 0/1 Y p2, 2/3 X p2, 4/5 Y p1, 6/7 X p1; every other byte 0]. q_misc follows the cycle's address
+    // every clock, so it is valid when rd1 samples dev_rdata (one clock after bc_start).
+    reg  [31:0] rng = 32'h1234_5678;
+    reg  [15:0] q_misc = 16'h0000;
+    always @(posedge clk_sys) begin
+        rng <= {rng[30:0], rng[31] ^ rng[21] ^ rng[1] ^ rng[0]};
+        if (byte_addr[19])                       // $1E4000: random
+            q_misc <= bc_addr[1] ? rng[15:0] : rng[31:16];
+        else if (bc_addr[1])                     // gun: odd words are 0
+            q_misc <= 16'h0000;
+        else case (bc_addr[4:3])
+            2'd0: q_misc <= {gun_counts[7:0],   8'h00};   // Y p2
+            2'd1: q_misc <= {gun_counts[15:8],  8'h00};   // X p2
+            2'd2: q_misc <= {gun_counts[23:16], 8'h00};   // Y p1
+            2'd3: q_misc <= {gun_counts[31:24], 8'h00};   // X p1
+        endcase
+    end
     wire        is_rom   = (cls == CLS_ROM);
 
     // --------------------------------------------------------------- RAMs
@@ -266,9 +290,10 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
     wire [1:0] be = {bc_uds, bc_lds};
     wire [15:0] q_1c, q_share, q_wram;
 
-    nb1_cpu_ram #(.WORDS(RAM1C_BYTES / 2), .AW($clog2(RAM1C_BYTES / 2))) ram_1c (
+    // M25: words 0..2047 = $1C0000-$1C0FFF, words 2048..4095 = $240000-$240FFF (address bit 21 picks)
+    nb1_cpu_ram #(.WORDS(RAM1C_BYTES), .AW($clog2(RAM1C_BYTES))) ram_1c (
         .clk_sys(clk_sys), .en(ram_en && cls == CLS_RAM1C), .we(ram_we),
-        .addr(bc_addr[$clog2(RAM1C_BYTES / 2):1]), .wdata(bc_wdata), .be(be), .rdata(q_1c));
+        .addr({bc_addr[21], bc_addr[$clog2(RAM1C_BYTES / 2):1]}), .wdata(bc_wdata), .be(be), .rdata(q_1c));
 
     // shared RAM: port A = 68020, port B = C75 (M8)
     // M24: a 68020 write into a word the C75 is reading-modifying-writing is held until the C75's write-back
@@ -442,6 +467,7 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
         CLS_OBJPOS, CLS_SPRBANK: dev_rdata = q_oreg;
         CLS_EEPROM: dev_rdata = q_eep;
         CLS_KEYCUS: dev_rdata = q_kc;
+        CLS_RNG:   dev_rdata = q_misc;
         default:   dev_rdata = 16'hFFFF;
     endcase
     reg         rd1 = 1'b0;         // a registered device read is one clock from done
@@ -463,6 +489,7 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
             CLS_OBJPOS, CLS_SPRBANK: bc_rdata = q_oreg;
             CLS_EEPROM: bc_rdata = q_eep;
             CLS_KEYCUS: bc_rdata = q_kc;
+            CLS_RNG:   bc_rdata = q_misc;
             default:   bc_rdata = 16'hFFFF;
         endcase
     end

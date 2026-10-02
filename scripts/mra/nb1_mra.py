@@ -113,6 +113,13 @@ def keycus_from_source(src, setname):
     kc['source'] = 'custom_key_r %s (init_%s)' % (g.group(1), init)
     return kc
 
+def io_board_from_source(src, setname):
+    # M25: the light-gun I/O board ($100000 gun_r) is fitted to the sets built on gunbulet_state
+    m = re.search(r'\bGAME\(\s*\d+\s*,\s*%s\s*,\s*\w+\s*,\s*(\w+)\s*,' % re.escape(setname), src)
+    if not m:
+        fail('no GAME() line for ' + setname)
+    return 'gun' if m.group(1) == 'gunbulet' else 'none'
+
 def board_bytes(game):
     kc = game['board']['keycus']
     if kc['mode'] not in (0, 1) or not (0 <= kc['id_word'] < 16) or not (0 <= kc['rnd_word'] < 16) \
@@ -124,8 +131,10 @@ def board_bytes(game):
     rot = game.get('rotate', 0)
     if rot not in (0, 90, 180, 270):
         fail('rotate %r is not a MAME orientation' % rot)
-    b = b'NB1B' + bytes([2, 16, 0, 0, kc['mode'], kc['id_word']]) + struct.pack('<H', kc['id']) \
-        + bytes([kc['rnd_word'], rot // 90, 0, 0])
+    io = {'none': 0, 'gun': 1}[game['board'].get('io', 'none')]
+    # v3 (M25) only when an I/O board is fitted, so every other MRA keeps its v2 record byte for byte
+    b = b'NB1B' + bytes([3 if io else 2, 16, 0, 0, kc['mode'], kc['id_word']]) + struct.pack('<H', kc['id']) \
+        + bytes([kc['rnd_word'], rot // 90, io, 0])
     assert len(b) == 16
     return b
 
@@ -144,7 +153,7 @@ def cmd_keycus(a):
 
 # ---------------------------------------------------------------------------
 # extract
-LOAD_RE = re.compile(r'\b(ROM_LOAD(?:32_WORD|32_BYTE|16_BYTE|16_WORD_SWAP)?)\s*\(\s*"([^"]+)"\s*,\s*(0x[0-9a-fA-F]+)\s*,\s*(0x[0-9a-fA-F]+)\s*,\s*CRC\(([0-9a-fA-F]+)\)\s*SHA1\(([0-9a-fA-F]+)\)')
+LOAD_RE = re.compile(r'\b(ROM_LOAD(?:32_WORD|32_BYTE|16_BYTE|16_WORD_SWAP)?)\s*\(\s*"([^"]+)"\s*,\s*(0x[0-9a-fA-F]+|\d+)\s*,\s*(0x[0-9a-fA-F]+)\s*,\s*CRC\(([0-9a-fA-F]+)\)\s*SHA1\(([0-9a-fA-F]+)\)')
 REGION_RE = re.compile(r'\bROM_REGION(\w*)\s*\(\s*(0x[0-9a-fA-F]+)\s*,\s*"([^"]+)"\s*,\s*([^)]*)\)')
 
 def parse_rom_start(src, setname):
@@ -156,6 +165,7 @@ def parse_rom_start(src, setname):
         fail('unsupported ROM macro in ROM_START(%s)' % setname)
     regions, cur = [], None
     for line in body.splitlines():
+        line = line.split('//')[0]          # commented-out alternatives (e.g. ptblank's 1 Mb gn1_spr0.5b)
         r = REGION_RE.search(line)
         if r:
             flags = r.group(4)
@@ -165,7 +175,7 @@ def parse_rom_start(src, setname):
             continue
         l = LOAD_RE.search(line)
         if l:
-            cur['loads'].append({'kind': l.group(1), 'name': l.group(2), 'offset': int(l.group(3), 16),
+            cur['loads'].append({'kind': l.group(1), 'name': l.group(2), 'offset': int(l.group(3), 0),
                                  'length': int(l.group(4), 16), 'crc': l.group(5).lower(),
                                  'sha1': l.group(6).lower()})
         elif 'ROM_LOAD' in line:
@@ -207,7 +217,7 @@ def cmd_extract(a):
         'mame': {'version': root.get('build'), 'source': os.path.basename(a.mame_src),
                  'note': a.note or ''},
         'regions': regions,
-        'board': {'keycus': keycus_from_source(src, a.set)},
+        'board': {'keycus': keycus_from_source(src, a.set), 'io': io_board_from_source(src, a.set)},
     }
     with open(a.out, 'w', newline='\n') as f:
         json.dump(out, f, indent=1)
@@ -424,6 +434,8 @@ def cmd_generate(a):
         kc['mode'], kc['id'], kc['part'] or 'none'))
     L.append('         on word %d, changing value on word %d. From MAME %s.' % (
         kc['id_word'], kc['rnd_word'], kc['source']))
+    if game['board'].get('io', 'none') == 'gun':
+        L.append('         Record v3: light-gun I/O board fitted (MAME gunbulet_state gun_r at $100000).')
     L.append('         Format: rtl/nb1/nb1_board_config.sv. -->')
     L.append('    <rom index="%d">' % IOCTL_BOARD)
     L.append('        <part>')
@@ -634,7 +646,8 @@ def cmd_validate(a):
     meta = {ld['name']: ld for r in game['regions'] for ld in r['loads']}
     rom0 = [r for r in root.findall('rom') if r.get('index') == str(IOCTL_ROM)][0]
     used = set()
-    for p in rom0.iter('part'):
+    nvrom = [r for r in root.findall('rom') if r.get('index') == str(IOCTL_NVRAM)]
+    for p in list(rom0.iter('part')) + [q for r in nvrom for q in r.iter('part')]:   # index 1: MAME "eeprom" default
         if p.get('name'):
             ld = meta.get(p.get('name'))
             if ld is None or p.get('crc') != ld['crc']:
@@ -711,12 +724,19 @@ def cmd_validate(a):
     rom1 = [r for r in root.findall('rom') if r.get('index') == str(IOCTL_NVRAM)][0]
     if not (kids.index(rom1) < kids.index(nv[0]) < kids.index(rom0)):
         fail('order must be: EEPROM image, <nvram>, then the ROM stream')
-    eimg, _ = mister_stream(a.mra, IOCTL_NVRAM, {})
-    if 'eeprom' not in {r['tag'] for r in game['regions']} and eimg != bytes([0xFF]) * NVRAM_BYTES:
-        fail('EEPROM power-on image is not %d x $FF' % NVRAM_BYTES)
+    eimg, _ = mister_stream(a.mra, IOCTL_NVRAM, syn)
+    eep = [r for r in game['regions'] if r['tag'] == 'eeprom']
+    if eep:
+        if eimg != syn[eep[0]['loads'][0]['name']]:
+            fail('EEPROM power-on image is not the MAME "eeprom" region')
+        what = 'MAME default %s' % eep[0]['loads'][0]['name']
+    else:
+        if eimg != bytes([0xFF]) * NVRAM_BYTES:
+            fail('EEPROM power-on image is not %d x $FF' % NVRAM_BYTES)
+        what = 'erased'
     checks += 3
-    print('  EEPROM: index %d power-on image %d bytes (erased), <nvram index="%d" size="%d"/>, both before the ROM stream'
-          % (IOCTL_NVRAM, len(eimg), IOCTL_NVRAM, NVRAM_BYTES))
+    print('  EEPROM: index %d power-on image %d bytes (%s), <nvram index="%d" size="%d"/>, both before the ROM stream'
+          % (IOCTL_NVRAM, len(eimg), what, IOCTL_NVRAM, NVRAM_BYTES))
     # 6. optional: the owner's local ROM set
     if a.zip:
         # --zip may list several zips separated by '|' (clone, parent, C75 BIOS), searched in order

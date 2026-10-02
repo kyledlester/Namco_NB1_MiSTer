@@ -25,15 +25,21 @@ package nb1_cpu_map_pkg;
     // Bytes of the $1C0000 RAM that M3 implements. MAME maps 64 KiB; Nebulas
     // Ray was measured to use $1C0000-$1C03FF only (M0 capture, 1800 frames:
     // stack top $1C0400, vectors, RAM ISR). [IMPLEMENTATION-DECISION]
-    localparam int RAM1C_BYTES = 16384;
+    // M25: 4 KiB (was 16 KiB). Every NB-1 game measured (MAME captures, docs/M25_IMPLEMENTATION.md) stays
+    // below $1C0500 (Point Blank's RAM test is the largest: $1C0000-$1C04FF). The same block RAM also backs
+    // the 4 KiB window RAM24 at $240000: J-League Soccer V-Shoot keeps a stack just below $240400 and Great
+    // Sluggers runs a RAM test over $240000-$2403FF; no game touches the rest of $240000-$2FFFFF except
+    // single writes at $260000 / $27C000 that are never read back.
+    localparam int RAM1C_BYTES = 4096;
+    localparam int RAM24_BYTES = 4096;
 
     typedef enum logic [3:0] {
         CLS_ROM     = 4'd0,   // $000000-$0FFFFF program ROM (SDRAM region PROG)
-        CLS_RAM1C   = 4'd1,   // $1C0000-$1C3FFF stack/vector RAM (BRAM)
+        CLS_RAM1C   = 4'd1,   // $1C0000-$1C0FFF stack/vector RAM + M25 $240000-$240FFF (one BRAM)
         CLS_SHARE   = 4'd2,   // $200000-$207FFF shared RAM (BRAM; C75 port in M6)
         CLS_WRAM    = 4'd3,   // $208000-$23FFFF work RAM (BRAM)
         CLS_RAMX    = 4'd4,   // MAME RAM not backed in M3: $1C4000-$1CFFFF, $240000-$2FFFFF
-        CLS_RNG     = 4'd5,   // $1E4000-$1E4003 random generator
+        CLS_RNG     = 4'd5,   // $1E4000-$1E4003 random generator; M25: also the gun I/O $100000-$10001F
         CLS_CPUREG  = 4'd6,   // $400000-$40001F IRQ/C75/watchdog registers
         CLS_EEPROM  = 4'd7,   // $580000-$5807FF EEPROM 2816 (M6)
         CLS_OBJRAM  = 4'd8,   // $600000-$61FFFF C355 sprite RAM
@@ -51,8 +57,10 @@ package nb1_cpu_map_pkg;
         if (a >= 24'h1C0000 && a < 24'h1C0000 + RAM1C_BYTES) return CLS_RAM1C;
         if (a >= 24'h1C0000 && a < 24'h1D0000)           return CLS_RAMX;
         if (a >= 24'h1E4000 && a < 24'h1E4004)           return CLS_RNG;
+        if (a >= 24'h100000 && a < 24'h100020)           return CLS_RNG;   // M25: gun I/O (reads 0 without a gun board)
         if (a >= 24'h200000 && a < 24'h208000)           return CLS_SHARE;
         if (a >= 24'h208000 && a < 24'h240000)           return CLS_WRAM;
+        if (a >= 24'h240000 && a < 24'h240000 + RAM24_BYTES) return CLS_RAM1C;   // M25
         if (a >= 24'h240000 && a < 24'h300000)           return CLS_RAMX;
         if (a >= 24'h400000 && a < 24'h400020)           return CLS_CPUREG;
         if (a >= 24'h580000 && a < 24'h580800)           return CLS_EEPROM;
@@ -70,7 +78,7 @@ package nb1_cpu_map_pkg;
         return (c == CLS_ROM) || (c == CLS_RAM1C) || (c == CLS_SHARE) ||
                (c == CLS_WRAM) || (c == CLS_C116) || (c == CLS_VRAM) ||
                (c == CLS_EEPROM) || (c == CLS_KEYCUS) || (c == CLS_TMCTL) ||
-               (c == CLS_OBJRAM) || (c == CLS_OBJPOS) || (c == CLS_SPRBANK);
+               (c == CLS_OBJRAM) || (c == CLS_OBJPOS) || (c == CLS_SPRBANK) || (c == CLS_RNG);
     endfunction
 
 endpackage

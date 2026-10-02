@@ -38,6 +38,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_c75_irq.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_cpu_raster.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_main_irq.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_share_lock.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_gun.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_main_bus.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_prog_cache.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_cpu.sv

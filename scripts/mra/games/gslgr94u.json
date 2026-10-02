@@ -1,0 +1,179 @@
+{
+ "set": "gslgr94u",
+ "parent": "",
+ "description": "Great Sluggers '94",
+ "year": "1994",
+ "manufacturer": "Namco",
+ "rotate": 0,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": ""
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gse2mprl.15b",
+     "offset": 2,
+     "length": 524288,
+     "crc": "a514349c",
+     "sha1": "1f7ec81cd6193410d2f01e6f0f84878561fc8035"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gse2mpru.13b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "b6afd238",
+     "sha1": "438a3411ac8ce3d22d5da8c0800738cb8d2994a9"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gse2spr0.bin",
+     "offset": 0,
+     "length": 131072,
+     "crc": "17e87cfc",
+     "sha1": "9cbeadb6dfcb736e8c80eab344f70fc2f58469d6"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gse-voi0.bin",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "d3480574",
+     "sha1": "0c468ed060769b36b7e41cf4919cb6d8691d64f6"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gseobj0l.bin",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "531520ca",
+     "sha1": "2a1a5282549c6f7a37d5fb8c0b342edb9dc45315"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gseobj0u.bin",
+     "offset": 2,
+     "length": 2097152,
+     "crc": "fcc1283c",
+     "sha1": "fb44ed742f362e6737412cabf3f67d9506456a9e"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gse-chr0.bin",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "9314085d",
+     "sha1": "150e8ea908861337f9be2749aa7f9e1d52570586"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "gse-chr1.bin",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "c128a887",
+     "sha1": "4faf78064dd48ec50684a7dc8d120f8c5985bf2a"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "gse-chr2.bin",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "48f0a311",
+     "sha1": "e39adcce835542e64ca87f6019d4a85fcbe388c2"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "gse-chr3.bin",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "adbd1f88",
+     "sha1": "3c7bb1a9a398412bd3c98cadf8ce63a16e2bfed5"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gse-sha0.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "6b2beabb",
+     "sha1": "815f7aef44735584edd4a9ca7e672471d07f225e"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 1,
+   "id": 359,
+   "id_word": 1,
+   "rnd_word": 2,
+   "part": "C359",
+   "source": "custom_key_r NAMCONB1_GSLGR94U (init_gslgr94u)"
+  },
+  "io": "none"
+ }
+}

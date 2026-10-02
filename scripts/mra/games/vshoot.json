@@ -1,0 +1,195 @@
+{
+ "set": "vshoot",
+ "parent": "",
+ "description": "J-League Soccer V-Shoot (Japan)",
+ "year": "1994",
+ "manufacturer": "Namco",
+ "rotate": 0,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": ""
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "vsj1mprl.15b",
+     "offset": 2,
+     "length": 524288,
+     "crc": "83a60d92",
+     "sha1": "c3db0c79f772a79418914353a3d6ecc4883ea54e"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "vsj1mpru.13b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "c63eb92d",
+     "sha1": "f93bd4b91daee645677955020dc8df14dc9bfd27"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "vsj1spr0.5b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "b0c71aa6",
+     "sha1": "a94fae02b46a645ff728d2f98827c85ff155892b"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "vsjvoi-0.5j",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "0528c9ed",
+     "sha1": "52b67978fdeb97b77065575774a7ddeb49fe1d81"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 8388608,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "vsjobj0l.ic1",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "e134faa7",
+     "sha1": "a844c8a5bd6d8907f9e5c7ba9e2ee8e9a886cd1e"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "vsjobj0u.ic2",
+     "offset": 2,
+     "length": 2097152,
+     "crc": "974d0714",
+     "sha1": "976050eaf82d4b66e13c1c579e5521eb867527fb"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "vsjobj1l.ic3",
+     "offset": 4194304,
+     "length": 2097152,
+     "crc": "ba46f967",
+     "sha1": "ddfb0ac7fba7369869e4df9a66d465a662eba2e6"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "vsjobj1u.ic4",
+     "offset": 4194306,
+     "length": 2097152,
+     "crc": "09da7e9c",
+     "sha1": "e98e07a886a4fe369748fc97f3cee6a4bb668385"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "vsjchr-0.8j",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "2af8ba7c",
+     "sha1": "74f5a382425974a9b2167bb01672dd13dea882f5"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "vsjchr-1.9j",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "b789d53e",
+     "sha1": "48b4cf956f9025e3c2b6f59b317596dfe0b6b142"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "vsjchr-2.10j",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "7ef80758",
+     "sha1": "c7e6d14f0823607dfd8a13ea6f164ffa85b5563e"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "vsjchr-3.11j",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "73ca58f6",
+     "sha1": "44bdc943fb10dc53279662cd528169a27d57e478"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "vsjsha-0.5m",
+     "offset": 0,
+     "length": 524288,
+     "crc": "78335ea4",
+     "sha1": "d4b9f179b1b456a866354ea308664c036de6414d"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 1,
+   "id": 368,
+   "id_word": 6,
+   "rnd_word": 4,
+   "part": "C368",
+   "source": "custom_key_r NAMCONB1_VSHOOT (init_vshoot)"
+  },
+  "io": "none"
+ }
+}

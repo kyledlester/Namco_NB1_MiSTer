@@ -1,0 +1,212 @@
+{
+ "set": "gunbuletj",
+ "parent": "ptblank",
+ "description": "Gun Bullet (Japan, GN1)",
+ "year": "1994",
+ "manufacturer": "Namco",
+ "rotate": 0,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": ""
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gn1_mprl.15b",
+     "offset": 2,
+     "length": 524288,
+     "crc": "f99e309e",
+     "sha1": "3fe0ddf756e6849f8effc7672456cbe32f65c98a"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gn1_mpru.13b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "72a4db07",
+     "sha1": "8c5e1e51cd961b311d03f7b21f36a5bd5e8e9104"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gn1_spr0.5b",
+     "offset": 0,
+     "length": 131072,
+     "crc": "6836ba38",
+     "sha1": "6ea17ea4bbb59be108e8887acd7871409580732f"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gn1-voi0.5j",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "05477eb7",
+     "sha1": "f2eaacb5dbac06c37c56b9b131230c9cf6602221"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 8388608,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gn1obj0l.ic1",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "06722dc8",
+     "sha1": "56fee4e17ed707fa6dbc6bad0d0281fc8cdf72d1"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gn1obj0u.ic2",
+     "offset": 2,
+     "length": 2097152,
+     "crc": "fcefc909",
+     "sha1": "48c19b6032096dd80777aa6d5eb5f90463095cbe"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gn1obj1l.ic3",
+     "offset": 4194304,
+     "length": 2097152,
+     "crc": "48468df7",
+     "sha1": "c5fb9082c84ac2ffceb6f5f4cbc1d40047c55e3d"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "gn1obj1u.ic4",
+     "offset": 4194306,
+     "length": 2097152,
+     "crc": "3109a071",
+     "sha1": "4bb16df5a3aecdf37baf843edfc82952d46f5227"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gn1-chr0.8j",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "a5c61246",
+     "sha1": "d1d9f286b93b5b9880160029c53384d13c08dd8a"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "gn1-chr1.9j",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "c8c59772",
+     "sha1": "91de633a300e3b25a919579eaada5549640ab6f0"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "gn1-chr2.10j",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "dc96d999",
+     "sha1": "d006a401762b57fef6716f56eb3a7edcb3d3c00e"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "gn1-chr3.11j",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "4352c308",
+     "sha1": "785c13df219dceac2f940519141665b630a29f86"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "gn1-sha0.5m",
+     "offset": 0,
+     "length": 524288,
+     "crc": "86d4ff85",
+     "sha1": "a71056b2bcbba50c834fe28269ebda9719df354a"
+    }
+   ]
+  },
+  {
+   "tag": "eeprom",
+   "size": 2048,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "eeprom",
+     "offset": 0,
+     "length": 2048,
+     "crc": "95760d0f",
+     "sha1": "94ac5a261d9afc77c2a163a50950b0e86b1f8041"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 0,
+   "id": 0,
+   "id_word": 0,
+   "rnd_word": 0,
+   "part": "",
+   "source": "custom_key_r NAMCONB1_GUNBULET (init_gunbulet)"
+  },
+  "io": "gun"
+ },
+ "buttons": "Trigger,-,-,Start,Coin,Service"
+}

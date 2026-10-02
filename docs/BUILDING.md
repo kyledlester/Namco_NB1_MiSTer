@@ -30,9 +30,9 @@ fitter seed 5 (`Namco_NB1.qsf`). Seeds 1, 2 and 3 also close timing.
 
 ## MRA
 
-The MRAs are generated, not hand-written (shown for `nebulray`; the clones
-use `nebulrayj.json` / `nebulrayp.json` the same way, with their MRAs in
-`MRA/_alternatives/_Nebulas Ray/`):
+The MRAs are generated, not hand-written, one JSON per MAME set in
+`scripts/mra/games/` (shown for `nebulray`; every other set works the same way,
+with clone MRAs in `MRA/_alternatives/_<Game>/`):
 
 ```powershell
 python scripts/mra/nb1_mra.py generate --game scripts/mra/games/nebulray.json -o "MRA/Nebulas Ray (World, NR2).mra"
@@ -44,24 +44,27 @@ it against MAME's region layout. With `--zip <nebulray.zip>` it also checks
 every CRC against your own ROM set (nothing derived from the ROMs is written).
 For a clone, list the clone's zip first and then the parent's:
 `--zip "nebulrayj.zip|nebulray.zip"`. The prototype has different reset
-vectors; add `--any-vectors` for it.
+vectors; add `--any-vectors` for it and for every game other than Nebulas Ray
+(the reset-vector spot check is Nebulas Ray's). A split set has no `c75.bin`; add
+`namcoc75.zip` to the `--zip` list.
 See [MRA_FORMAT.md](MRA_FORMAT.md).
 
 ## Benches
 
-`sim/` holds two self-contained ModelSim benches that back the timing
-constraints: `m22_hq2x_ce_tb.sv` (the HQ2x clock-enable cadence behind the
-multicycle in `NB1.sdc`) and `m22_c75_alu_tb.sv` (the exhaustive equivalence
-check for the timing changes in the M37702 core, `rtl/vendor/README.md`).
+`sim/` holds three self-contained ModelSim benches: `m22_hq2x_ce_tb.sv` (the
+HQ2x clock-enable cadence behind the multicycle in `NB1.sdc`),
+`m22_c75_alu_tb.sv` (the exhaustive equivalence check for the timing changes in
+the M37702 core, `rtl/vendor/README.md`) and `m25_gun_tb.sv` (the light-gun board
+against MAME's gun formula for every input value, plus mouse and crosshair).
 The MAME-comparison benches used during development need locally captured
 MAME data and are not part of this repository.
 
 ## Install on MiSTer
 
 1. Copy `Releases/Namco_NB1_YYYYMMDD.rbf` to `_Arcade/cores/`.
-2. Copy the `MRA/*.mra` files to `_Arcade/`, and the `MRA/_alternatives/_Nebulas Ray`
-   folder to `_Arcade/_alternatives/`.
-3. Put `nebulray.zip` (and `nebulrayj.zip` / `nebulrayp.zip`) in `games/mame/`,
-   plus `namcoc75.zip` if you use a split or merged set.
+2. Copy the `MRA/*.mra` files to `_Arcade/`, and the `MRA/_alternatives/_<Game>`
+   folders to `_Arcade/_alternatives/`.
+3. Put the game zips in `games/mame/`, plus `namcoc75.zip` if you use split or
+   merged sets.
 
 See [COMPATIBILITY.md](COMPATIBILITY.md) for ROM set notes.

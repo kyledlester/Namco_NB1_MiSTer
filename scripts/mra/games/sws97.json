@@ -1,0 +1,179 @@
+{
+ "set": "sws97",
+ "parent": "",
+ "description": "Super World Stadium '97 (Japan)",
+ "year": "1997",
+ "manufacturer": "Namco",
+ "rotate": 0,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": ""
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss71mprl.bin",
+     "offset": 2,
+     "length": 524288,
+     "crc": "bd60b50e",
+     "sha1": "9e00bacd506182ab2af2c0efdd5cc401b3e46485"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss71mpru.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "3444f5a8",
+     "sha1": "8d0f35b3ba8f65dbc67c3b2d273833227a8b8b2a"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss71spr0.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "71cb12f5",
+     "sha1": "6e13bd16a5ba14d6e47a21875db3663ada3c06a5"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss71voi0.bin",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "2740ec72",
+     "sha1": "9694a7378ea72771d2b1d43db6d74ed347ba27d3"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss71ob0l.bin",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "9559ad44",
+     "sha1": "fd56a8620f6958cc090f783d74cb38bba46d2423"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss71ob0u.bin",
+     "offset": 2,
+     "length": 2097152,
+     "crc": "4df4a722",
+     "sha1": "07eb94628ceeb7cbce2d39d479f33c37583a346a"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss71chr0.bin",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "bd606356",
+     "sha1": "a62c55600e46f8821db0b84d79fc2588742ad7ad"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss71chr1.bin",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "4dc75da6",
+     "sha1": "a29932b4fb39648e2c02df668f46cafb80c53619"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss71chr2.bin",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "1240704b",
+     "sha1": "a24281681053cc6649f00ec5a31c7249101eaee1"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss71chr3.bin",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "066581d4",
+     "sha1": "999cd478d9da452bb57793cd276c6c0d87e2825e"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss71sha0.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "be8c2758",
+     "sha1": "0a1b6c03cdaec6103ae8483b67faf3840234f825"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 1,
+   "id": 434,
+   "id_word": 4,
+   "rnd_word": 10,
+   "part": "C434",
+   "source": "custom_key_r NAMCONB1_SWS97 (init_sws97)"
+  },
+  "io": "none"
+ }
+}

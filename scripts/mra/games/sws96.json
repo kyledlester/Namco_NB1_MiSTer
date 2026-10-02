@@ -1,0 +1,179 @@
+{
+ "set": "sws96",
+ "parent": "",
+ "description": "Super World Stadium '96 (Japan)",
+ "year": "1996",
+ "manufacturer": "Namco",
+ "rotate": 0,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": ""
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss61mprl.bin",
+     "offset": 2,
+     "length": 524288,
+     "crc": "06f55e73",
+     "sha1": "6be26f8a2ef600bf07c580f210d7b265ac464002"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss61mpru.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "0abdbb83",
+     "sha1": "67e8b712291f9bcf2c3a52fbc451fad54679cab8"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss61spr0.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "71cb12f5",
+     "sha1": "6e13bd16a5ba14d6e47a21875db3663ada3c06a5"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss61voi0.bin",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "2740ec72",
+     "sha1": "9694a7378ea72771d2b1d43db6d74ed347ba27d3"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss61ob0l.bin",
+     "offset": 0,
+     "length": 2097152,
+     "crc": "579b19d4",
+     "sha1": "7f18097c683d2b1c532f54ee514dd499f5965165"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "ss61ob0u.bin",
+     "offset": 2,
+     "length": 2097152,
+     "crc": "a69bbd9e",
+     "sha1": "8f4c44e2caa31d25433a04c19c51904ec9461e2f"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss61chr0.bin",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "9d2ae07b",
+     "sha1": "7d268f6c7d8145c913f80049369ae3106d69e939"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss61chr1.bin",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "4dc75da6",
+     "sha1": "a29932b4fb39648e2c02df668f46cafb80c53619"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss61chr2.bin",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "1240704b",
+     "sha1": "a24281681053cc6649f00ec5a31c7249101eaee1"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss61chr3.bin",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "066581d4",
+     "sha1": "999cd478d9da452bb57793cd276c6c0d87e2825e"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "ss61sha0.bin",
+     "offset": 0,
+     "length": 524288,
+     "crc": "fceaa19c",
+     "sha1": "c9303a755ac7af19c4804a264d1a09d987f39e74"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 1,
+   "id": 426,
+   "id_word": 0,
+   "rnd_word": 8,
+   "part": "C426",
+   "source": "custom_key_r NAMCONB1_SWS96 (init_sws96)"
+  },
+  "io": "none"
+ }
+}

@@ -117,6 +117,9 @@ localparam CONF_STR = {
 	"-;",
 	"O[14:13],Orientation,Horizontal,Vertical CCW,Vertical CW,Flipped;",
 	"O[15],Sprite zoom,Continuous,MAME;",
+	"H2-;",
+	"H2O[17],Gun aim P1,Joystick,Mouse;",
+	"H2O[18],Crosshair,Off,On;",
 	"-;",
 	"P1,CRT Adjust;",
 	"P1O[96],CRT Adjust,Off,On;",
@@ -145,6 +148,8 @@ wire  [21:0] gamma_bus;
 wire   [1:0] buttons;
 wire [127:0] status;
 wire  [31:0] joystick_0, joystick_1, joystick_2, joystick_3;
+wire  [15:0] joy_a0, joy_a1;   // M25: left analog sticks {Y, X}, signed
+wire  [24:0] ps2_mouse;
 
 // ioctl indices (MRA <rom index=...>). See docs/M2_IMPLEMENTATION.md section 5.
 //   0 = ROM stream (fixed platform layout, nb1_mem_pkg)
@@ -185,7 +190,10 @@ hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io
 	.joystick_1(joystick_1),
 	.joystick_2(joystick_2),
 	.joystick_3(joystick_3),
-	.status_menumask({14'd0, ~status[96], 1'b0}),   // M17: H1 = CRT Adjust amounts, hidden while Off
+	.status_menumask({13'd0, ~brd_io_gun, ~status[96], 1'b0}),   // M17: H1 = CRT Adjust amounts, hidden while Off; M25: H2 = gun options, light-gun games only
+	.joystick_l_analog_0(joy_a0),   // M25: light-gun aim (GunCon 2 / Sinden / Gun4IR via Main_MiSTer, or a stick)
+	.joystick_l_analog_1(joy_a1),
+	.ps2_mouse(ps2_mouse),
 
 	.ioctl_download(ioctl_download),
 	.ioctl_index(ioctl_index),
@@ -492,6 +500,7 @@ wire c75_irom_we = ioctl_download && (ioctl_index == IOCTL_ROM) && ioctl_wr &&
 
 wire        brd_ok, brd_seen;
 wire [1:0]  brd_game_rot;   // M16: the game's MAME orientation (record v2; else ROT90)
+wire        brd_io_gun;     // M25: light-gun I/O board fitted (record v3)
 wire [7:0]  kc_mode;
 wire [3:0]  kc_id_word, kc_rnd_word;
 wire [15:0] kc_id;
@@ -511,7 +520,8 @@ nb1_board_config #(.INDEX(IOCTL_BOARD)) board_config
 	.kc_id_word(kc_id_word),
 	.kc_id(kc_id),
 	.kc_rnd_word(kc_rnd_word),
-	.game_rot(brd_game_rot)
+	.game_rot(brd_game_rot),
+	.io_gun(brd_io_gun)
 );
 
 ///////////////////////   ORIENTATION (M16)   ////////////////////
@@ -726,6 +736,7 @@ nb1_main_bus #(.LINES_LOG2(M3_LINES_LOG2), .PCACHE_LOG2(M12_PCACHE_LOG2), .PREDE
 	.c75sh_wdata(c75sh_wdata),
 	.c75sh_be(c75sh_be),
 	.c75sh_rdata(c75sh_rdata),
+	.gun_counts(gun_counts),
 	.c75_run(c75_run),
 	.c75_restart(c75_restart),
 	.c75_ctl_writes(c75_ctl_writes),
@@ -1221,7 +1232,31 @@ end
 // M21 release: the M1 test pattern, the M2 ROM-check panel and the M3-M18 debug overlay are no longer
 // instantiated (the owner's RC removes the Display / Background OSD options; the game picture always
 // goes out). The modules stay in the repository for the benches (m9_overlay_tb etc.).
-wire [7:0] m3_r = game_r, m3_g = game_g, m3_b = game_b;
+// M25: light-gun I/O board (Point Blank / Gun Bullet; the board record says it is fitted). Aim: player n's
+// left analog stick -- Main_MiSTer delivers a GunCon 2 on a 15 kHz CRT (calibrated per core with F10),
+// Sinden / Gun4IR / Wiimote guns or a plain stick this way -- or the mouse for player 1 (OSD). Trigger =
+// button 1 on the normal input port. Optional crosshair (OSD) over the game picture.
+wire [31:0] gun_counts;
+wire        gun_cross;
+wire [23:0] gun_cross_rgb;
+nb1_gun gun
+(
+	.clk_sys(clk_sys),
+	.enable(brd_io_gun),
+	.src_mouse(status[17]),
+	.joy_a0(joy_a0),
+	.joy_a1(joy_a1),
+	.ps2_mouse(ps2_mouse),
+	.counts(gun_counts),
+	.cross_on(status[18] && de),
+	.hcount(hcount),
+	.vcount(vcount),
+	.cross_hit(gun_cross),
+	.cross_rgb(gun_cross_rgb)
+);
+wire [7:0] m3_r = gun_cross ? gun_cross_rgb[23:16] : game_r;
+wire [7:0] m3_g = gun_cross ? gun_cross_rgb[15:8]  : game_g;
+wire [7:0] m3_b = gun_cross ? gun_cross_rgb[7:0]   : game_b;
 
 ///////////////////////   VIDEO (M16)   //////////////////////////
 //

@@ -10,7 +10,7 @@
 //
 // Record, 16 bytes, little-endian fields:
 //   0-3   "NB1B"
-//   4     version = 1 or 2 (M16)
+//   4     version = 1, 2 (M16) or 3 (M25)
 //   5     record length in bytes = 16
 //   6-7   0
 //   8     KEYCUS mode: 0 = no KEYCUS answer (every word reads $0000),
@@ -21,7 +21,9 @@
 //   13    version 2: the game's orientation, MAME ROT in quarter turns clockwise
 //         (0 = ROT0, 1 = ROT90, 2 = ROT180, 3 = ROT270; M16 control composition,
 //         nb1_orientation); version 1: 0
-//   14-15 0
+//   14    version 3: the I/O board fitted (0 = none, 1 = light-gun board read at $100000, Point Blank /
+//         Gun Bullet: nb1_gun); versions 1-2: 0
+//   15    0
 //
 // Timing: the fields are taken only when the index-2 download ENDS, and
 // only if the whole record is present and valid. Every download holds the
@@ -52,7 +54,8 @@ module nb1_board_config #(
     output reg  [3:0]  kc_id_word  = 4'd0,
     output reg  [15:0] kc_id       = 16'd0,
     output reg  [3:0]  kc_rnd_word = 4'd0,
-    output reg  [1:0]  game_rot    = 2'd1     // M16: quarter turns CW (default ROT90, see above)
+    output reg  [1:0]  game_rot    = 2'd1,    // M16: quarter turns CW (default ROT90, see above)
+    output reg         io_gun      = 1'b0     // M25: light-gun I/O board (version 3, byte 14 = 1)
 );
     wire sel = ioctl_download && (ioctl_index == INDEX);
     reg  sel_q = 1'b0;
@@ -62,21 +65,22 @@ module nb1_board_config #(
     reg [7:0]  got = 8'd0;
 
     wire hdr_ok = (w[0] == 16'h424E) && (w[1] == 16'h4231) &&     // "NB1B"
-                  ((w[2] == 16'h1001) || (w[2] == 16'h1002)) &&    // version 1 or 2, length 16
+                  ((w[2] == 16'h1001) || (w[2] == 16'h1002) || (w[2] == 16'h1003)) &&   // version 1-3, length 16
                   (w[3] == 16'h0000);
-    wire v2     = (w[2][7:0] == 8'd2);
+    wire v2     = (w[2][7:0] >= 8'd2);
+    wire v3     = (w[2][7:0] == 8'd3);
     wire fld_ok = (w[4][7:0] <= 8'd1) &&                          // mode 0 or 1
                   (w[4][15:12] == 4'd0) &&                        // ID word 0-15
                   (w[6][7:4] == 4'd0) &&                          // changing word 0-15
                   (v2 ? (w[6][15:8] <= 8'd3) : (w[6][15:8] == 8'd0)) &&   // v2: orientation 0-3
-                  (w[7] == 16'h0000);
+                  (v3 ? (w[7][7:0] <= 8'd1 && w[7][15:8] == 8'd0) : (w[7] == 16'h0000));
     wire valid  = (got == 8'hFF) && hdr_ok && fld_ok;
 
     always @(posedge clk_sys) begin
         if (init) begin
             sel_q <= 1'b0; got <= 8'd0;
             record_ok <= 1'b0; record_seen <= 1'b0;
-            kc_mode <= 8'd0; kc_id_word <= 4'd0; kc_id <= 16'd0; kc_rnd_word <= 4'd0; game_rot <= 2'd1;
+            kc_mode <= 8'd0; kc_id_word <= 4'd0; kc_id <= 16'd0; kc_rnd_word <= 4'd0; game_rot <= 2'd1; io_gun <= 1'b0;
         end else begin
             sel_q <= sel;
             if (sel && !sel_q) begin                 // a new record is arriving
@@ -96,6 +100,7 @@ module nb1_board_config #(
                 kc_id       <= valid ? w[5]       : 16'd0;
                 kc_rnd_word <= valid ? w[6][3:0]  : 4'd0;
                 game_rot    <= (valid && v2) ? w[6][9:8] : 2'd1;
+                io_gun      <= valid && v3 && w[7][0];
             end
         end
     end

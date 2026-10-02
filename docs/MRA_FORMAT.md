@@ -60,7 +60,7 @@ After every download and reset the core reads the regions back and compares.
 | Byte | Field |
 | --- | --- |
 | 0-3 | `"NB1B"` |
-| 4 | version (1 or 2) |
+| 4 | version (1, 2 or 3) |
 | 5 | record length = 16 |
 | 6-7 | 0 |
 | 8 | KEYCUS mode: 0 = no KEYCUS (every word reads `$0000`), 1 = ID word + changing word |
@@ -68,13 +68,17 @@ After every download and reset the core reads the regions back and compares.
 | 10-11 | KEYCUS ID value (the part number, e.g. C366 = `$016E`) |
 | 12 | KEYCUS changing-word index (0-15) |
 | 13 | version 2: the game's MAME orientation in quarter turns clockwise (0 = ROT0 ... 3 = ROT270) |
-| 14-15 | 0 |
+| 14 | version 3: the I/O board fitted (0 = none, 1 = light-gun board read at `$100000`, Point Blank / Gun Bullet) |
+| 15 | 0 |
 
 The fields are taken only when the whole record has arrived and is valid. With
 no record or an invalid one, the KEYCUS answers `$0000` and the game's own
 protection check fails visibly. Nebulas Ray:
 `4E 42 31 42 02 10 00 00 01 03 6E 01 07 01 00 00` (C366 on word 3, changing
-value on word 7, ROT90). The values come from MAME's `custom_key_r`.
+value on word 7, ROT90). The values come from MAME's `custom_key_r`. Point Blank:
+`4E 42 31 42 03 10 00 00 00 00 00 00 00 00 01 00` (no KEYCUS, ROT0, gun board).
+The generator writes version 3 only for games with an I/O board, so the other
+records stay version 2.
 
 ## Index 1: EEPROM
 
