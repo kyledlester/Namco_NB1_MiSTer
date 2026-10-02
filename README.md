@@ -13,9 +13,13 @@ sound, EEPROM saves, CRT output, and more.
 1. Copy the core from [`Releases/`](Releases/) (`Namco_NB1_YYYYMMDD.rbf`) to
    **`/media/fat/_Arcade/cores/`**.
 2. Copy the MRA file from [`MRA/`](MRA/) to **`/media/fat/_Arcade/`**.
-3. Put the MAME ROM zip (MAME 0.289 set `nebulray.zip`) in **`/media/fat/games/mame/`**.
-   With a split or merged set, also add the C75 BIOS zip **`namcoc75.zip`**
-   there. A non-merged set already includes the BIOS.
+   For the Japanese and prototype sets, copy the `_Nebulas Ray` folder from
+   [`MRA/_alternatives/`](MRA/_alternatives/) to **`/media/fat/_Arcade/_alternatives/`**.
+3. Put the MAME 0.289 ROM zips in **`/media/fat/games/mame/`**: `nebulray.zip`,
+   plus `nebulrayj.zip` / `nebulrayp.zip` for the Japanese and prototype sets.
+   With split sets the clones also need the parent `nebulray.zip`. With a split
+   or merged set, also add the C75 BIOS zip **`namcoc75.zip`**. A non-merged set
+   already includes everything.
 4. Load the game from the **Arcade** menu.
 
 ROMs are not included. You must supply your own.
@@ -26,8 +30,17 @@ ROMs are not included. You must supply your own.
 | --- | --- | --- | --- | --- | --- |
 | Nebulas Ray (World, NR2) | `nebulray` | 1994 | Vertical shoot 'em up | NB-1 | Full game playable |
 
-The Japanese (NR1) and prototype Nebulas Ray sets have no MRA yet. The other
-NB-1 games (Point Blank / Gun Bullet, Great Sluggers, Great Sluggers '94, Super
+### Alternatives
+
+These use the same core and the same board settings as the main set, with a
+different ROM set.
+
+| Game | MAME set | Year | Parent game | Status |
+| --- | --- | --- | --- | --- |
+| Nebulas Ray (Japan, NR1) | `nebulrayj` | 1994 | Nebulas Ray | Full game playable |
+| Nebulas Ray (prototype) | `nebulrayp` | 1994 | Nebulas Ray | Full game playable |
+
+The other NB-1 games (Point Blank / Gun Bullet, Great Sluggers, Great Sluggers '94, Super
 World Stadium '95-'97, J-League Soccer V-Shoot) are not supported yet. The
 platform RTL has no per-game code, but those games need features Nebulas Ray
 does not use (light guns, other protection chip modes) and have not been

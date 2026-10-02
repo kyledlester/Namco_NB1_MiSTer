@@ -30,7 +30,9 @@ fitter seed 5 (`Namco_NB1.qsf`). Seeds 1, 2 and 3 also close timing.
 
 ## MRA
 
-The MRA is generated, not hand-written:
+The MRAs are generated, not hand-written (shown for `nebulray`; the clones
+use `nebulrayj.json` / `nebulrayp.json` the same way, with their MRAs in
+`MRA/_alternatives/_Nebulas Ray/`):
 
 ```powershell
 python scripts/mra/nb1_mra.py generate --game scripts/mra/games/nebulray.json -o "MRA/Nebulas Ray (World, NR2).mra"
@@ -40,6 +42,9 @@ python scripts/mra/nb1_mra.py validate --mra "MRA/Nebulas Ray (World, NR2).mra" 
 `validate` rebuilds the ROM stream the way MiSTer's MRA loader does and checks
 it against MAME's region layout. With `--zip <nebulray.zip>` it also checks
 every CRC against your own ROM set (nothing derived from the ROMs is written).
+For a clone, list the clone's zip first and then the parent's:
+`--zip "nebulrayj.zip|nebulray.zip"`. The prototype has different reset
+vectors; add `--any-vectors` for it.
 See [MRA_FORMAT.md](MRA_FORMAT.md).
 
 ## Benches
@@ -54,8 +59,9 @@ MAME data and are not part of this repository.
 ## Install on MiSTer
 
 1. Copy `Releases/Namco_NB1_YYYYMMDD.rbf` to `_Arcade/cores/`.
-2. Copy the `MRA/*.mra` files to `_Arcade/`.
-3. Put `nebulray.zip` in `games/mame/`, plus `namcoc75.zip` if you use a split
-   or merged set.
+2. Copy the `MRA/*.mra` files to `_Arcade/`, and the `MRA/_alternatives/_Nebulas Ray`
+   folder to `_Arcade/_alternatives/`.
+3. Put `nebulray.zip` (and `nebulrayj.zip` / `nebulrayp.zip`) in `games/mame/`,
+   plus `namcoc75.zip` if you use a split or merged set.
 
 See [COMPATIBILITY.md](COMPATIBILITY.md) for ROM set notes.

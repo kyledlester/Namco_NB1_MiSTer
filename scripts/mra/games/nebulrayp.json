@@ -1,0 +1,458 @@
+{
+ "set": "nebulrayp",
+ "parent": "nebulray",
+ "description": "Nebulas Ray (prototype)",
+ "year": "1994",
+ "manufacturer": "Namco",
+ "rotate": 90,
+ "mame": {
+  "version": "0.289 (mame0289)",
+  "source": "namconb1.cpp",
+  "note": ""
+ },
+ "regions": [
+  {
+   "tag": "maincpu",
+   "size": 1048576,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "prgl_1-17.15b",
+     "offset": 2,
+     "length": 524288,
+     "crc": "9066aa9e",
+     "sha1": "5f9a07ccc255c93263fbe8a3ab7c88e4dcc29850"
+    },
+    {
+     "kind": "ROM_LOAD32_WORD",
+     "name": "prgu_1-17.13b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "c77f06d3",
+     "sha1": "5baf5337e99aa31f8ff07cad217c5186ed63892b"
+    }
+   ]
+  },
+  {
+   "tag": "c75data",
+   "size": 524288,
+   "width": "16_LE",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "sprg.5b",
+     "offset": 0,
+     "length": 524288,
+     "crc": "e32c099f",
+     "sha1": "e7214bda9c4ee1ad99aeac827520e69a723dfb8f"
+    }
+   ]
+  },
+  {
+   "tag": "c352",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "rom0_e-30.ic5",
+     "offset": 0,
+     "length": 524288,
+     "crc": "beee81e6",
+     "sha1": "13f2b0316c6466cdd9ad63a1345dc56dc7883297"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "rom1_a1.ic6",
+     "offset": 524288,
+     "length": 524288,
+     "crc": "91a88946",
+     "sha1": "7f51a63e0dd09adae52f6476049949635c23adfa"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "rom2_22.ic7",
+     "offset": 1048576,
+     "length": 524288,
+     "crc": "ef492d2b",
+     "sha1": "672175e67957be683d9b0507f2a03b6293ae359b"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "rom3_w3.ic8",
+     "offset": 1572864,
+     "length": 524288,
+     "crc": "5d4900e1",
+     "sha1": "2434517c66e3cbe01ecaed025273ab05e267108f"
+    }
+   ]
+  },
+  {
+   "tag": "c355spr",
+   "size": 16777216,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a0.1a",
+     "offset": 0,
+     "length": 524288,
+     "crc": "e6ecca1a",
+     "sha1": "310d8a40400d022003e88f19ae880fb1325294cf"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b0.1b",
+     "offset": 1,
+     "length": 524288,
+     "crc": "004f6665",
+     "sha1": "56775749653ad968a6a4c0a335b28a3e72f53eac"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c0.1c",
+     "offset": 2,
+     "length": 524288,
+     "crc": "58ce8745",
+     "sha1": "25774961408d4164295c056bf0381907b2ae17cc"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d0.1d",
+     "offset": 3,
+     "length": 524288,
+     "crc": "94913c00",
+     "sha1": "89acec4409d3f56bfb8fc3bead5c93214e42ec63"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a1.2a",
+     "offset": 2097152,
+     "length": 524288,
+     "crc": "4681329b",
+     "sha1": "871c01c3bfc84cb4f75d01dbc98798a593da6715"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b1.2b",
+     "offset": 2097153,
+     "length": 524288,
+     "crc": "8464608d",
+     "sha1": "99cdb43485ce9c9bc759399a0d002861e2586ae0"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c1.2c",
+     "offset": 2097154,
+     "length": 524288,
+     "crc": "8d82b485",
+     "sha1": "a431f5b1f15a8539f83edf198587597660f3e23b"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d1.2d",
+     "offset": 2097155,
+     "length": 524288,
+     "crc": "f0b10fa7",
+     "sha1": "f0fed84fe655fe9ea47b9b607745b1728018d81f"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a2.3a",
+     "offset": 4194304,
+     "length": 524288,
+     "crc": "03908666",
+     "sha1": "a9b82a8f16101522fa3df6cbab65afcba296fabd"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b2.3b",
+     "offset": 4194305,
+     "length": 524288,
+     "crc": "ebfeb8d6",
+     "sha1": "7a8a126ddd900e3cf596949e141c80ec9cf411be"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c2.3c",
+     "offset": 4194306,
+     "length": 524288,
+     "crc": "9b3c02dc",
+     "sha1": "a9717b7940ea23f538ef9973908f883573acf928"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d2.3d",
+     "offset": 4194307,
+     "length": 524288,
+     "crc": "07767b77",
+     "sha1": "053cb730eabd70f928197e2b1151e36d52ffa718"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a3.4a",
+     "offset": 6291456,
+     "length": 524288,
+     "crc": "ac6502a0",
+     "sha1": "5afd6ddc72535f1db6a3cd6d28eaabb73b9796f6"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b3.4b",
+     "offset": 6291457,
+     "length": 524288,
+     "crc": "73eca091",
+     "sha1": "9920dcf4de599a91e4eff388ca16dc0e6ff2b2df"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c3.4c",
+     "offset": 6291458,
+     "length": 524288,
+     "crc": "ea718267",
+     "sha1": "70a06cb83b90daddeda1bb823e933b7f978cb2f7"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d3.4d",
+     "offset": 6291459,
+     "length": 524288,
+     "crc": "b22d1d10",
+     "sha1": "02c3dd7a6b19c14ace0cef3978473a77cabf32ed"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a4.5a",
+     "offset": 8388608,
+     "length": 524288,
+     "crc": "c1da92b6",
+     "sha1": "57912d5993e46508d3432c093ac746cc3426467f"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b4.5b",
+     "offset": 8388609,
+     "length": 524288,
+     "crc": "7b00567d",
+     "sha1": "7ec2f3d63f1e5c667263d21644cc421e25d577b7"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c4.5c",
+     "offset": 8388610,
+     "length": 524288,
+     "crc": "d46ef578",
+     "sha1": "a9265380b0ae4bf209c8a754db834e898ae09b92"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d4.5d",
+     "offset": 8388611,
+     "length": 524288,
+     "crc": "ffff82d9",
+     "sha1": "db4b57ac44dca14cc043827d77eb6958214c17c3"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a5.6a",
+     "offset": 10485760,
+     "length": 524288,
+     "crc": "6b171a66",
+     "sha1": "9a9cced3949ebdc9335e1029126a5bc5e9ff543a"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b5.6b",
+     "offset": 10485761,
+     "length": 524288,
+     "crc": "ce576891",
+     "sha1": "559f2840831e52f1fc105a9a4d6193891655b752"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c5.6c",
+     "offset": 10485762,
+     "length": 524288,
+     "crc": "d04ebb7a",
+     "sha1": "12de79e9130af93e7fd78f21549670c4c5cd70d8"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d5.6d",
+     "offset": 10485763,
+     "length": 524288,
+     "crc": "96aa1d38",
+     "sha1": "8d3b4771acd0b7e4829afdc520e1ed6d5adf823c"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a6.7a",
+     "offset": 12582912,
+     "length": 524288,
+     "crc": "c423ddd4",
+     "sha1": "dbccdcbfa96ce8c20d93520fd6e0af03a98da787"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b6.7b",
+     "offset": 12582913,
+     "length": 524288,
+     "crc": "4f51fc57",
+     "sha1": "d1655f6aeaa0f16cd7c888430ef437bf5341e323"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c6.7c",
+     "offset": 12582914,
+     "length": 524288,
+     "crc": "0c763fdb",
+     "sha1": "037456f6952dfdad045e8c01adb80881e6983d93"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d6.7d",
+     "offset": 12582915,
+     "length": 524288,
+     "crc": "82d6cef2",
+     "sha1": "d4158e6cb9f747bb2af662044262dc9efe306bc2"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "a7.8a",
+     "offset": 14680064,
+     "length": 524288,
+     "crc": "811ccd6b",
+     "sha1": "875615a0662b2f756e2d00dcd85c3dddcac972e8"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "b7.8b",
+     "offset": 14680065,
+     "length": 524288,
+     "crc": "2ee75fc6",
+     "sha1": "6d21dd6f62efc99e3a367328edab774cced87129"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "c7.8c",
+     "offset": 14680066,
+     "length": 524288,
+     "crc": "e22194fd",
+     "sha1": "b2f084c80437b3e22f564760e59ecb7a0dd748c8"
+    },
+    {
+     "kind": "ROM_LOAD32_BYTE",
+     "name": "d7.8d",
+     "offset": 14680067,
+     "length": 524288,
+     "crc": "4b682344",
+     "sha1": "4f8e904708451dfe7656b0923ff8cdd9b131ee6d"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap",
+   "size": 4194304,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr0",
+     "offset": 0,
+     "length": 1048576,
+     "crc": "8d5b54ea",
+     "sha1": "616d5729f474da91da19a8246066280652da998c"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr1",
+     "offset": 1048576,
+     "length": 1048576,
+     "crc": "cd21630c",
+     "sha1": "9974c0eb1051ca52f001e6631264a1936bb50620"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr2",
+     "offset": 2097152,
+     "length": 1048576,
+     "crc": "70a11023",
+     "sha1": "bead486a86bd96c6fdfd2ea4d4d37c38bbe9bfbb"
+    },
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-chr3",
+     "offset": 3145728,
+     "length": 1048576,
+     "crc": "8f4b1d51",
+     "sha1": "b48fb2c8ccd9105a5b48be44dd3fe4309769efa4"
+    }
+   ]
+  },
+  {
+   "tag": "c123tmap:mask",
+   "size": 524288,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "nr1-sha0",
+     "offset": 0,
+     "length": 524288,
+     "crc": "ca667e13",
+     "sha1": "685032603224cb81bcb85361921477caec570d5e"
+    }
+   ]
+  },
+  {
+   "tag": "proms",
+   "size": 32,
+   "width": "",
+   "fill": 0,
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c366.bin",
+     "offset": 0,
+     "length": 32,
+     "crc": "8c96f31d",
+     "sha1": "d186859cfc19a63266084372080d0a5bee687ae2"
+    }
+   ]
+  },
+  {
+   "tag": "mcu:internal",
+   "size": 16384,
+   "width": "",
+   "fill": 0,
+   "device": "namcoc75",
+   "loads": [
+    {
+     "kind": "ROM_LOAD",
+     "name": "c75.bin",
+     "offset": 0,
+     "length": 16384,
+     "crc": "42f539a5",
+     "sha1": "3103e5a0a2867620309fd4fe478a2be0effbeff8"
+    }
+   ]
+  }
+ ],
+ "board": {
+  "keycus": {
+   "mode": 1,
+   "id": 366,
+   "id_word": 3,
+   "rnd_word": 7,
+   "part": "C366",
+   "source": "custom_key_r NAMCONB1_NEBULRAY (init_nebulray)"
+  }
+ }
+}

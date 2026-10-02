@@ -202,7 +202,7 @@ def cmd_extract(a):
                                'length': int(b.get('size')), 'crc': b.get('crc'), 'sha1': b.get('sha1')}]})
     disp = g.find('display')
     out = {
-        'set': a.set, 'description': g.findtext('description'), 'year': g.findtext('year'),
+        'set': a.set, 'parent': g.get('cloneof') or '', 'description': g.findtext('description'), 'year': g.findtext('year'),
         'manufacturer': g.findtext('manufacturer'), 'rotate': int(disp.get('rotate', '0')),
         'mame': {'version': root.get('build'), 'source': os.path.basename(a.mame_src),
                  'note': a.note or ''},
@@ -364,12 +364,17 @@ def hexlines(b, indent):
         out.append(indent + ' '.join('%02X' % x for x in b[i:i+32]))
     return '\n'.join(out)
 
+def mra_zips(game):
+    # clone sets (MAME split/merged): the clone's own zip, then the parent's, then the C75 BIOS device
+    names = [game['set']] + ([game['parent']] if game.get('parent') else []) + ['namcoc75']
+    return '|'.join(n + '.zip' for n in names)
+
 def cmd_generate(a):
     game = json.load(open(a.game))
     regs = {r['tag']: r for r in game['regions']}
     ents = check_entries(game)
     rec = record_bytes(ents, STREAM_END)
-    zips = '%s.zip|namcoc75.zip' % game['set']
+    zips = mra_zips(game)
     L = []
     L.append('<!--')
     L.append('  %s - Namco NB-1 - MRA for the %s MiSTer core.' % (game['description'], RBF))
@@ -714,18 +719,22 @@ def cmd_validate(a):
           % (IOCTL_NVRAM, len(eimg), IOCTL_NVRAM, NVRAM_BYTES))
     # 6. optional: the owner's local ROM set
     if a.zip:
+        # --zip may list several zips separated by '|' (clone, parent, C75 BIOS), searched in order
         files = {}
-        with zipfile.ZipFile(a.zip) as z:
-            byname = {i.filename: i for i in z.infolist()}
-            bycrc = {'%08x' % i.CRC: i for i in z.infolist()}
-            for name, ld in meta.items():
-                info = bycrc.get(ld['crc']) or byname.get(name)
-                if info is None:
-                    fail('%s not in %s' % (name, a.zip))
-                d = z.read(info)
-                if len(d) != ld['length'] or '%08x' % crc32(d) != ld['crc'] or hashlib.sha1(d).hexdigest() != ld['sha1']:
-                    fail('%s: size/CRC/SHA1 mismatch in the zip' % name)
-                files[name] = d
+        zs = [zipfile.ZipFile(zp) for zp in a.zip.split('|')]
+        for name, ld in meta.items():
+            info = None
+            for z in zs:
+                infos = z.infolist()
+                info = {'%08x' % i.CRC: i for i in infos}.get(ld['crc']) or {i.filename: i for i in infos}.get(name)
+                if info is not None:
+                    break
+            if info is None:
+                fail('%s not in %s' % (name, a.zip))
+            d = z.read(info)
+            if len(d) != ld['length'] or '%08x' % crc32(d) != ld['crc'] or hashlib.sha1(d).hexdigest() != ld['sha1']:
+                fail('%s: size/CRC/SHA1 mismatch in the zip' % name)
+            files[name] = d
         real, _ = mister_stream(a.mra, IOCTL_ROM, files)
         if real != platform_stream(game, files):
             fail('real stream differs from MAME layout')
@@ -737,7 +746,7 @@ def cmd_validate(a):
         print('  local ROM set: all %d files match MAME SHA1; all %d check entries pass on the real stream'
               % (len(files), len(ents)))
         print('  spot check: PROG longword 0 (SSP) = $%08X, longword 4 (PC) = $%08X' % (ssp, pc))
-        if (ssp, pc) != (0x001C0400, 0x00000400):
+        if (ssp, pc) != (0x001C0400, 0x00000400) and not a.any_vectors:
             fail('reset vectors differ from the documented values (NB1_HARDWARE_SPEC section 3)')
         print('  real stream CRC32 = %08X (not stored anywhere)' % crc32(real))
         checks += len(ents) + 1
@@ -776,7 +785,8 @@ def main():
     v.add_argument('--mra', required=True)
     v.add_argument('--game', required=True)
     v.add_argument('--listxml')
-    v.add_argument('--zip')
+    v.add_argument('--zip', help="the local ROM set; several zips separated by '|' (clone|parent|namcoc75)")
+    v.add_argument('--any-vectors', action='store_true', help='skip the NR2 reset-vector spot check (other program ROMs)')
     v.add_argument('--mame-src')
     k = sp.add_parser('keycus')
     k.add_argument('--mame-src', required=True)

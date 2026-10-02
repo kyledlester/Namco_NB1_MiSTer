@@ -6,9 +6,14 @@
 | --- | --- | --- |
 | Nebulas Ray (World, NR2) | `nebulray` | Full game playable on MiSTer hardware: attract mode, gameplay, sound, music, EEPROM saves, service mode, operator FLIP |
 
-Not provided yet: Nebulas Ray (Japan, NR1) `nebulrayj` and the prototype
-`nebulrayp`. They share the parent's hardware and would need their own MRAs and
-testing.
+## Alternate sets (`MRA/_alternatives/`)
+
+Copy the `_Nebulas Ray` folder to `_Arcade/_alternatives/` on the SD card.
+
+| Game | MAME set | Status |
+| --- | --- | --- |
+| Nebulas Ray (Japan, NR1) | `nebulrayj` | Full game playable (clone of `nebulray`: different program ROMs) |
+| Nebulas Ray (prototype) | `nebulrayp` | Full game playable (clone of `nebulray`: earlier program and sound data, graphics and samples on smaller ROMs) |
 
 Not supported: Point Blank / Gun Bullet (light guns), Great Sluggers, Great
 Sluggers '94, Super World Stadium '95 / '96 / '97, J-League Soccer V-Shoot. They
@@ -18,7 +23,11 @@ Mach Breakers) use a different board with a rotate/zoom layer.
 
 ## ROM sets
 
-* MAME **0.289** `nebulray.zip`. The MRA lists every file by name and CRC32.
+* MAME **0.289** `nebulray.zip`, `nebulrayj.zip`, `nebulrayp.zip`. The MRAs list
+  every file by name and CRC32.
+* The clone MRAs look in the clone's zip, then the parent `nebulray.zip`, then
+  `namcoc75.zip`, so split, merged and non-merged sets all work. A split clone
+  set needs `nebulray.zip` next to it.
 * The C75 MCU BIOS (`c75.bin`) is part of a non-merged `nebulray.zip`. With a
   split or merged set it comes from **`namcoc75.zip`**; put that zip next to the
   game zip. The MRA looks in both.
