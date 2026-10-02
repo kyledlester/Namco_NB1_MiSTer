@@ -563,35 +563,38 @@ module na1_m37702
     st<=S_DONE;
    end
    // PSH: mask in mdata; bits 0..7 in order = A B X Y DPR DT PG PS(ipl,ps)
+   // NB-1 M24 (timing, local modification): mask8 is kept in visit order and shifted right each time
+   // step advances by one, so the bit for the current step is always mask8[0] (was mask8[step] / a
+   // fixed per-step bit for PUL): same decisions, same states; the 8:1 select left the m_addr path.
    S_PSH1: begin mask8<=mdata[7:0];step<=0;st<=S_PSH2;end
    S_PSH2: begin
     if(step==4'd8) st<=S_DONE;
-    else if(!mask8[step[2:0]]) step<=step+4'd1;
+    else if(!mask8[0]) begin step<=step+4'd1;mask8<=mask8>>1;end
     else begin
      case(step[2:0])
-      3'd0: begin tmp=ra;budget<=budget+20'd2;if(!fm) push8(ra[15:8],S_PSH3); else begin push8(ra[7:0],S_PSH2);step<=4'd1;end end
-      3'd1: begin tmp=rb;budget<=budget+20'd2;if(!fm) push8(rb[15:8],S_PSH3); else begin push8(rb[7:0],S_PSH2);step<=4'd2;end end
-      3'd2: begin tmp=rx;budget<=budget+20'd2;if(!fx) push8(rx[15:8],S_PSH3); else begin push8(rx[7:0],S_PSH2);step<=4'd3;end end
-      3'd3: begin tmp=ry;budget<=budget+20'd2;if(!fx) push8(ry[15:8],S_PSH3); else begin push8(ry[7:0],S_PSH2);step<=4'd4;end end
+      3'd0: begin tmp=ra;budget<=budget+20'd2;if(!fm) push8(ra[15:8],S_PSH3); else begin push8(ra[7:0],S_PSH2);step<=4'd1;mask8<=mask8>>1;end end
+      3'd1: begin tmp=rb;budget<=budget+20'd2;if(!fm) push8(rb[15:8],S_PSH3); else begin push8(rb[7:0],S_PSH2);step<=4'd2;mask8<=mask8>>1;end end
+      3'd2: begin tmp=rx;budget<=budget+20'd2;if(!fx) push8(rx[15:8],S_PSH3); else begin push8(rx[7:0],S_PSH2);step<=4'd3;mask8<=mask8>>1;end end
+      3'd3: begin tmp=ry;budget<=budget+20'd2;if(!fx) push8(ry[15:8],S_PSH3); else begin push8(ry[7:0],S_PSH2);step<=4'd4;mask8<=mask8>>1;end end
       3'd4: begin tmp=rdpr;budget<=budget+20'd2;push8(rdpr[15:8],S_PSH3);end
-      3'd5: begin budget<=budget+20'd1;push8(rdt,S_PSH2);step<=4'd6;end
-      3'd6: begin budget<=budget+20'd1;push8(rpg,S_PSH2);step<=4'd7;end
+      3'd5: begin budget<=budget+20'd1;push8(rdt,S_PSH2);step<=4'd6;mask8<=mask8>>1;end
+      3'd6: begin budget<=budget+20'd1;push8(rpg,S_PSH2);step<=4'd7;mask8<=mask8>>1;end
       default: begin tmp={8'd0,ps};budget<=budget+20'd2;push8({5'd0,ipl},S_PSH3);end
      endcase
     end
    end
-   S_PSH3: begin push8(tmp[7:0],S_PSH2);step<=step+4'd1;end     // second (low) byte
+   S_PSH3: begin push8(tmp[7:0],S_PSH2);step<=step+4'd1;mask8<=mask8>>1;end     // second (low) byte
    // PUL: mask in mdata; order PS(ps,ipl) DT DPR Y X B A; widths from the new
    // flags; bit 6 has no effect. step = list index, phase = byte within it.
-   S_PUL1: begin mask8<=mdata[7:0];step<=0;phase<=0;st<=S_PUL2;end
+   S_PUL1: begin mask8<={1'b0,mdata[0],mdata[1],mdata[2],mdata[3],mdata[4],mdata[5],mdata[7]};step<=0;phase<=0;st<=S_PUL2;end   // visit order
    S_PUL2: begin
     case(step)
-     4'd0: begin if(mask8[7]) begin budget<=budget+20'd3;pull8(S_PUL3);end else step<=4'd1;end
-     4'd1: begin if(mask8[5]) begin budget<=budget+20'd3;pull8(S_PUL3);end else step<=4'd2;end
-     4'd2: begin if(mask8[4]) begin budget<=budget+20'd4;pull8(S_PUL3);end else step<=4'd3;end
-     4'd3: begin if(mask8[3]) begin budget<=budget+20'd3;pull8(S_PUL3);end else step<=4'd4;end
-     4'd4: begin if(mask8[2]) begin budget<=budget+20'd3;pull8(S_PUL3);end else step<=4'd5;end
-     4'd5: begin if(mask8[1]) begin budget<=budget+20'd3;pull8(S_PUL3);end else step<=4'd6;end
+     4'd0: begin if(mask8[0]) begin budget<=budget+20'd3;pull8(S_PUL3);end else begin step<=4'd1;mask8<=mask8>>1;end end
+     4'd1: begin if(mask8[0]) begin budget<=budget+20'd3;pull8(S_PUL3);end else begin step<=4'd2;mask8<=mask8>>1;end end
+     4'd2: begin if(mask8[0]) begin budget<=budget+20'd4;pull8(S_PUL3);end else begin step<=4'd3;mask8<=mask8>>1;end end
+     4'd3: begin if(mask8[0]) begin budget<=budget+20'd3;pull8(S_PUL3);end else begin step<=4'd4;mask8<=mask8>>1;end end
+     4'd4: begin if(mask8[0]) begin budget<=budget+20'd3;pull8(S_PUL3);end else begin step<=4'd5;mask8<=mask8>>1;end end
+     4'd5: begin if(mask8[0]) begin budget<=budget+20'd3;pull8(S_PUL3);end else begin step<=4'd6;mask8<=mask8>>1;end end
      4'd6: begin if(mask8[0]) begin budget<=budget+20'd3;pull8(S_PUL3);end else st<=S_DONE;end
      default: st<=S_DONE;
     endcase
@@ -599,15 +602,15 @@ module na1_m37702
    S_PUL3: begin  // a pulled byte arrived for list entry `step`, byte `phase`
     phase<=0;
     case(step)
-     4'd0: begin if(phase==2'd0) begin set_ps(mdata[7:0]);phase<=2'd1;pull8(S_PUL3);end else begin ipl<=mdata[2:0];step<=4'd1;st<=S_PUL2;end end
-     4'd1: begin rdt<=mdata[7:0];step<=4'd2;st<=S_PUL2;end
-     4'd2: begin if(phase==2'd0) begin rdpr[7:0]<=mdata[7:0];phase<=2'd1;pull8(S_PUL3);end else begin rdpr[15:8]<=mdata[7:0];step<=4'd3;st<=S_PUL2;end end
-     4'd3: begin if(phase==2'd0) begin ry[7:0]<=mdata[7:0];if(fx) begin step<=4'd4;st<=S_PUL2;end else begin phase<=2'd1;pull8(S_PUL3);end end
-                 else begin ry[15:8]<=mdata[7:0];step<=4'd4;st<=S_PUL2;end end
-     4'd4: begin if(phase==2'd0) begin rx[7:0]<=mdata[7:0];if(fx) begin step<=4'd5;st<=S_PUL2;end else begin phase<=2'd1;pull8(S_PUL3);end end
-                 else begin rx[15:8]<=mdata[7:0];step<=4'd5;st<=S_PUL2;end end
-     4'd5: begin if(phase==2'd0) begin rb[7:0]<=mdata[7:0];if(fm) begin step<=4'd6;st<=S_PUL2;end else begin phase<=2'd1;pull8(S_PUL3);end end
-                 else begin rb[15:8]<=mdata[7:0];step<=4'd6;st<=S_PUL2;end end
+     4'd0: begin if(phase==2'd0) begin set_ps(mdata[7:0]);phase<=2'd1;pull8(S_PUL3);end else begin ipl<=mdata[2:0];step<=4'd1;mask8<=mask8>>1;st<=S_PUL2;end end
+     4'd1: begin rdt<=mdata[7:0];step<=4'd2;mask8<=mask8>>1;st<=S_PUL2;end
+     4'd2: begin if(phase==2'd0) begin rdpr[7:0]<=mdata[7:0];phase<=2'd1;pull8(S_PUL3);end else begin rdpr[15:8]<=mdata[7:0];step<=4'd3;mask8<=mask8>>1;st<=S_PUL2;end end
+     4'd3: begin if(phase==2'd0) begin ry[7:0]<=mdata[7:0];if(fx) begin step<=4'd4;mask8<=mask8>>1;st<=S_PUL2;end else begin phase<=2'd1;pull8(S_PUL3);end end
+                 else begin ry[15:8]<=mdata[7:0];step<=4'd4;mask8<=mask8>>1;st<=S_PUL2;end end
+     4'd4: begin if(phase==2'd0) begin rx[7:0]<=mdata[7:0];if(fx) begin step<=4'd5;mask8<=mask8>>1;st<=S_PUL2;end else begin phase<=2'd1;pull8(S_PUL3);end end
+                 else begin rx[15:8]<=mdata[7:0];step<=4'd5;mask8<=mask8>>1;st<=S_PUL2;end end
+     4'd5: begin if(phase==2'd0) begin rb[7:0]<=mdata[7:0];if(fm) begin step<=4'd6;mask8<=mask8>>1;st<=S_PUL2;end else begin phase<=2'd1;pull8(S_PUL3);end end
+                 else begin rb[15:8]<=mdata[7:0];step<=4'd6;mask8<=mask8>>1;st<=S_PUL2;end end
      default: begin if(phase==2'd0) begin ra[7:0]<=mdata[7:0];if(fm) st<=S_DONE; else begin phase<=2'd1;pull8(S_PUL3);end end
                  else begin ra[15:8]<=mdata[7:0];st<=S_DONE;end end
     endcase

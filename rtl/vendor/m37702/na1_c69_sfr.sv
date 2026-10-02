@@ -194,20 +194,28 @@ module na1_c69_sfr #(parameter MAME_EARLY=1, parameter COUNT_STOP=0)(
  // the ipl/flag_i -> resolver -> instruction-boundary path (-0.9 ns). The core
  // waits one extra clock at the boundary (na1_m37702 S_DONE) so the registered
  // value always reflects the ipl/I flag of the instruction that just finished.
- reg [19:0] elig,match,sel;reg [7:0] present,top;reg [2:0] best;
+ // NB-1 M24 (timing, local modification): the same result with ipl entering last. Per priority p,
+ // pres_all[p] = some pending line has priority p, and hi_line[p] = the highest such line; both are
+ // independent of ipl. Then best = the highest p > ipl with pres_all[p], and the line is hi_line[best]
+ // (every line of priority best > ipl is eligible, so the highest of them is the scan's choice).
+ // Equivalence with the former form: sim/m24_irq_resolver_tb.sv.
+ reg [7:0] pres_all,present,top;reg [2:0] best;reg [4:0] hi_line[1:7];
  reg c_take;reg [4:0] c_line;reg [2:0] c_pri;
  always @(posedge clk_sys) begin irq_take<=c_take;irq_line<=c_line;irq_pri<=c_pri;end
  always @* begin
-  c_take=0;c_line=0;c_pri=0;elig=20'd0;match=20'd0;sel=20'd0;present=8'd0;top=8'd0;best=3'd0;
+  pres_all=8'd0;
+  for(int p=1;p<8;p=p+1) begin
+   hi_line[p]=5'd0;
+   for(int k=0;k<20;k=k+1) if(pend[k] && int_ctl[k][2:0]==p[2:0]) begin pres_all[p]=1'b1;hi_line[p]=k[4:0];end
+  end
+ end
+ always @* begin
+  c_take=0;c_line=0;c_pri=0;present=8'd0;top=8'd0;best=3'd0;
   if(sim_force_valid) begin c_take=1;c_line=sim_force_line;c_pri=int_ctl[sim_force_line][2:0];end
   else if(!flag_i && !sim_inject_only) begin
-   for(int k=0;k<20;k=k+1) elig[k]=pend[k] && (int_ctl[k][2:0]>ipl);          // above ipl (so >= 1)
-   for(int p=1;p<8;p=p+1) for(int k=0;k<20;k=k+1) if(elig[k] && int_ctl[k][2:0]==p[2:0]) present[p]=1'b1;
+   for(int p=1;p<8;p=p+1) present[p]=pres_all[p] && (p[2:0]>ipl);            // above ipl (so >= 1)
    for(int p=1;p<8;p=p+1) top[p]=present[p] && !(|(present>>(p+1)));           // one-hot: best priority
-   for(int p=1;p<8;p=p+1) if(top[p]) best=best|p[2:0];
-   for(int k=0;k<20;k=k+1) match[k]=elig[k] && (int_ctl[k][2:0]==best);
-   for(int k=0;k<20;k=k+1) sel[k]=match[k] && !(|(match>>(k+1)));             // one-hot: highest line
-   for(int k=0;k<20;k=k+1) if(sel[k]) c_line=c_line|k[4:0];
+   for(int p=1;p<8;p=p+1) if(top[p]) begin best=best|p[2:0];c_line=c_line|hi_line[p];end
    c_take=|present;c_pri=best;
   end
  end

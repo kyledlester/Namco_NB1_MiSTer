@@ -119,6 +119,10 @@ NB-1 is Namco's mid-1990s 32-bit board:
   test scenes this happens on a handful of lines in the heaviest frames only,
   and it is very hard to notice at full speed.
 * Palette fades on the bottom two picture lines can differ slightly from MAME.
+* In attract mode, at the change from one stage to the cutscene, a sustained
+  high-pitched organ chord from the stage music can occasionally get stuck and
+  play through the whole cutscene until the next stage starts. It shows up
+  only every few attract loops.
 
 ## Releases
 

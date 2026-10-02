@@ -271,9 +271,16 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
         .addr(bc_addr[$clog2(RAM1C_BYTES / 2):1]), .wdata(bc_wdata), .be(be), .rdata(q_1c));
 
     // shared RAM: port A = 68020, port B = C75 (M8)
+    // M24: a 68020 write into a word the C75 is reading-modifying-writing is held until the C75's write-back
+    // (nb1_share_lock: the C75 sound driver takes mailbox commands with a read-modify-write).
+    wire sh_wait, sh_go;
+    nb1_share_lock #(.AW(14)) share_lock (
+        .clk_sys(clk_sys), .reset(reset), .c_en(c75sh_en), .c_we(c75sh_we), .c_addr(c75sh_addr),
+        .m_wr(bc_start && cls == CLS_SHARE && is_write), .m_addr(bc_addr[14:1]),
+        .m_wait(sh_wait), .m_go(sh_go), .holds());
     nb1_dp_ram #(.WORDS(16384), .AW(14)) ram_share (
         .clk_sys(clk_sys),
-        .en_a(ram_en && cls == CLS_SHARE), .we_a(ram_we), .addr_a(bc_addr[14:1]),
+        .en_a((ram_en && cls == CLS_SHARE && !sh_wait) || sh_go), .we_a(ram_we), .addr_a(bc_addr[14:1]),
         .wdata_a(bc_wdata), .be_a(be), .rdata_a(q_share),
         .en_b(c75sh_en), .we_b(c75sh_we), .addr_b(c75sh_addr),
         .wdata_b(c75sh_wdata), .be_b(c75sh_be), .rdata_b(c75sh_rdata));
@@ -413,7 +420,7 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
 
     // ------------------------------------------------------ response state
     // done_now: the cycle can complete in its bc_start cycle.
-    wire done_now = !rsp_impl || (is_write && !obj_wait) || (is_rom && hit) || is_c75ctl || is_iack;
+    wire done_now = !rsp_impl || (is_write && !obj_wait && !sh_wait) || (is_rom && hit) || is_c75ctl || is_iack;
     reg  done_q  = 1'b0;
     reg  filling = 1'b0;       // line fill in flight for the current cycle
     reg  err_q   = 1'b0;       // current ROM read got rsp_err: answer $FFFF
@@ -474,8 +481,8 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
             if (rd1) begin rd_q <= dev_rdata; done_q <= 1'b1; end
             if (bc_start) begin
                 // synchronous device read: data next cycle (M22 SYNC_REG: registered, one more); held sprite write: later
-                done_q <= (done_now || (is_sync && !SYNC_REG)) && !obj_wait;
-                rd1    <= SYNC_REG && is_sync && !done_now && !obj_wait;
+                done_q <= (done_now || (is_sync && !SYNC_REG)) && !obj_wait && !sh_wait;
+                rd1    <= SYNC_REG && is_sync && !done_now && !obj_wait && !sh_wait;
                 err_q  <= 1'b0;
                 if (is_rom && !is_write && !hit) begin
                     // L0 miss: fetch the whole aligned 8-byte line (from SDRAM, or from the M12 L1)
@@ -485,7 +492,7 @@ module nb1_main_bus #(parameter int LINES_LOG2 = 0, parameter int PCACHE_LOG2 = 
                     done_q         <= 1'b0;
                 end
             end
-            if (obj_go) done_q <= 1'b1;
+            if (obj_go || sh_go) done_q <= 1'b1;
             if (lg_mreq_valid && mreq_ready) lg_mreq_valid <= 1'b0;
             if (filling && (PC ? pc_done : mrsp_valid)) begin
                 filling <= 1'b0;

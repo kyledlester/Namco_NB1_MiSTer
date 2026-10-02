@@ -56,7 +56,12 @@ variable inside `always`, and `inout reg`). `scripts/test-m2.ps1` generates a me
   counts padded per instruction, interrupt entry, `m37702m2_device` SFR map, timers, A-D, interrupt resolver).
   `na1_m37702_decode.sv` is generated from MAME's m37710 opcode tables by the NA-1 repository's
   `scripts/m20b-decode.py`.
-- **Modifications: two (M19, M22).** `na1_m37702_decode.sv` is byte-identical to upstream. **M22 (timing only, no
+- **Modifications: three (M19, M22, M24).** `na1_m37702_decode.sv` is byte-identical to upstream. **M24 (timing only,
+  no behaviour change):** the `na1_c69_sfr.sv` interrupt resolver computes, per priority, whether a line is pending and
+  the highest such line without `ipl`, then takes the highest priority above `ipl` and its line, so `ipl` enters last
+  (same result as the scan; `sim/m24_irq_resolver_tb.sv`, 4.8 M cases). In `na1_m37702.sv` the PSH/PUL register
+  mask is kept in visit order and shifted as `step` advances, so the current bit is always `mask8[0]` (same states
+  and decisions; `sim/m24_c75_pshpul_tb.sv` runs it in lock-step with the M23 core over every mask and width mode). **M22 (timing only, no
   behaviour change):** `na1_m37702.sv` registers the 16-bit decimal ADC/SBC high byte at `S_OPER` for both low-byte
   carries (`dech`, `dbh0`/`dbh1`, the same idea as upstream's own M20C low-byte cut), and takes the MPY Z flag from
   the operands (a non-truncated product is zero exactly when a factor is). Exhaustive equivalence:
