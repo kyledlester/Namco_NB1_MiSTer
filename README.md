@@ -1,5 +1,7 @@
 # Namco NB-1 for MiSTer
 
+<img width="450" height="580" alt="image" src="https://github.com/user-attachments/assets/d019d91a-2d38-49c6-9d95-d0900960b250" />
+
 A MiSTer FPGA core for Namco's **NB-1** arcade board (1993-1997): **Nebulas Ray**,
 **Point Blank / Gun Bullet** (with light-gun support), **Great Sluggers**, **Great Sluggers '94**,
 **Super World Stadium '95 / '96 / '97** and **J-League Soccer V-Shoot**. One core (`Namco_NB1`)
