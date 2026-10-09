@@ -39,6 +39,7 @@ module nb1_native_flip #(
     output reg  [23:0] rgb_out = '0,   // flipped picture, registered (NB1.sv muxes it in while flipping)
     output reg         flipping = 1'b0,
     output wire        ddr_active,     // flipping, or a DDR3 transaction still in progress
+    output wire        ddr_idle,       // M26: no DDR3 transaction requested or in progress (fast-load arbitration)
     output reg  [15:0] late_lines = '0,  // a line not fetched in time (shown black)
     output reg  [15:0] fifo_drops = '0,  // write FIFO full (pixels lost)
 
@@ -122,6 +123,7 @@ module nb1_native_flip #(
     assign ddr_rd       = m_rd;
     assign f_pop        = (m == M_IDLE) && own && !rd_pending && (f_cnt != 7'd0);
     assign ddr_active   = flipping || (m != M_IDLE);
+    assign ddr_idle     = (m == M_IDLE);
 
     always @(posedge clk_sys) begin
         lb_we <= 1'b0;

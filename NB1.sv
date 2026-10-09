@@ -171,7 +171,22 @@ wire        ioctl_wait;
 wire        ld_ioctl_wait;       // ROM loader (index 0)
 wire        ioctl_upload, ioctl_rd, nv_upload_req, nv_ioctl_wait;
 wire [15:0] ioctl_din;
-assign ioctl_wait = ld_ioctl_wait | nv_ioctl_wait;
+// M26 fast ROM loading (nb1_ddr_load, instantiated with the DDR3 port below): the index-0 stream the
+// consumers see (ROM loader, ROM check, C75 internal ROM) is hps_io's, or the image replayed from DDR3.
+wire        dl_active, dl_busy, dl_download, dl_wr;
+wire [26:0] dl_addr;
+wire [15:0] dl_dout;
+wire        st_download = dl_active ? dl_download : ioctl_download;
+wire [15:0] st_index    = dl_active ? IOCTL_ROM   : ioctl_index;
+wire        st_wr       = dl_active ? dl_wr       : ioctl_wr;
+wire [26:0] st_addr     = dl_active ? dl_addr     : ioctl_addr;
+wire [15:0] st_dout     = dl_active ? dl_dout     : ioctl_dout;
+// M26: during a DDR3 fast load the ROM stream comes from nb1_ddr_load, not from hps_io (no SPI words to hold)
+assign ioctl_wait = (dl_active ? 1'b0 : ld_ioctl_wait) | nv_ioctl_wait;
+wire        dl_own;             // the replay owns the DDR3 port (see the DDR3 mux)
+wire [7:0]  dl_burstcnt;
+wire [28:0] dl_ddr_addr;
+wire        dl_rd;
 
 hps_io #(.CONF_STR(CONF_STR), .WIDE(1)) hps_io
 (
@@ -279,7 +294,7 @@ wire reset_sys, reset_cpu, reset_c75, reset_video;
 nb1_reset reset_gen
 (
 	.clk_sys(clk_sys),
-	.reset_request(RESET | status[0] | buttons[1] | ioctl_download),   // M2: devices held during any download
+	.reset_request(RESET | status[0] | buttons[1] | ioctl_download | dl_busy),   // M2: devices held during any download (M26: and a DDR3 replay)
 	.pll_locked(pll_locked),
 	.frame_end(frame_end),
 	.reset_sys(reset_sys),
@@ -418,11 +433,11 @@ nb1_rom_loader #(.INDEX(IOCTL_ROM)) rom_loader
 (
 	.clk_sys(clk_sys),
 	.init(mem_init),
-	.ioctl_download(ioctl_download),
-	.ioctl_index(ioctl_index),
-	.ioctl_wr(ioctl_wr),
-	.ioctl_addr(ioctl_addr),
-	.ioctl_dout(ioctl_dout),
+	.ioctl_download(st_download),   // M26: hps_io or the DDR3 replay
+	.ioctl_index(st_index),
+	.ioctl_wr(st_wr),
+	.ioctl_addr(st_addr),
+	.ioctl_dout(st_dout),
 	.ioctl_wait(ld_ioctl_wait),
 	.req_valid(mreq_valid[0]),
 	.req_ready(mreq_ready[0]),
@@ -452,11 +467,11 @@ nb1_rom_check #(.INDEX(IOCTL_CHECK), .MAX_ENTRIES(32)) rom_check
 	.init(mem_init),
 	.reset(reset_sys),
 	.restart(status[1]),
-	.ioctl_download(ioctl_download),
-	.ioctl_index(ioctl_index),
-	.ioctl_wr(ioctl_wr),
-	.ioctl_addr(ioctl_addr),
-	.ioctl_dout(ioctl_dout),
+	.ioctl_download(st_download),   // M26: hps_io or the DDR3 replay (the record, index 3, is always hps_io's)
+	.ioctl_index(st_index),
+	.ioctl_wr(st_wr),
+	.ioctl_addr(st_addr),
+	.ioctl_dout(st_dout),
 	.rom_loaded(rom_loaded),
 	.stream_bytes(rom_stream_bytes),
 	.req_valid(mreq_valid[2]),
@@ -488,8 +503,8 @@ nb1_rom_check #(.INDEX(IOCTL_CHECK), .MAX_ENTRIES(32)) rom_check
 // still verifies the stream). WIDE=1: ioctl_dout = {byte 2k+1, byte 2k} =
 // the little-endian C75 word.
 
-wire c75_irom_we = ioctl_download && (ioctl_index == IOCTL_ROM) && ioctl_wr &&
-                   (ioctl_addr >= 27'h1800000) && (ioctl_addr < 27'h1804000);
+wire c75_irom_we = st_download && (st_index == IOCTL_ROM) && st_wr &&
+                   (st_addr >= 27'h1800000) && (st_addr < 27'h1804000);   // M26: st_* = hps_io or DDR3 replay
 
 ///////////////////////   BOARD CONFIGURATION (M7)   /////////////
 //
@@ -961,8 +976,8 @@ nb1_c75 c75
 	.reset(c75_reset_q),   // M22: registered (was the combinational OR below, a reset fan-out path)
 	.ce_c75(ce_c75),
 	.irom_we(c75_irom_we),
-	.irom_waddr(ioctl_addr[13:1]),
-	.irom_wdata(ioctl_dout),
+	.irom_waddr(st_addr[13:1]),
+	.irom_wdata(st_dout),
 	.sh_en(c75sh_en),
 	.sh_we(c75sh_we),
 	.sh_addr(c75sh_addr),
@@ -1292,6 +1307,7 @@ wire [28:0] fl_addr, sr_addr;
 wire [63:0] fl_din, sr_din;
 wire [7:0]  fl_be, sr_be;
 wire        fl_we, fl_rd, sr_we, sr_rd, sr_fb_en;
+wire        fl_idle;
 
 nb1_native_flip native_flip
 (
@@ -1304,7 +1320,7 @@ nb1_native_flip native_flip
 	.frame_swap(vblank_begin),
 	.rgb_in({m3_r, m3_g, m3_b}),
 	.flip_req(rot_native_flip),
-	.own(!sr_fb_en),
+	.own(!sr_fb_en && !dl_own),   // M26: not while the fast-load replay owns the port
 	.rgb_out(flip_rgb),
 	.flipping(flipping),
 	.ddr_active(flip_ddr),
@@ -1316,7 +1332,8 @@ nb1_native_flip native_flip
 	.ddr_be(fl_be),
 	.ddr_we(fl_we),
 	.ddr_rd(fl_rd),
-	.ddr_busy(DDRAM_BUSY),
+	.ddr_busy(DDRAM_BUSY | dl_own),
+	.ddr_idle(fl_idle),
 	.ddr_dout(DDRAM_DOUT),
 	.ddr_dout_ready(DDRAM_DOUT_READY)
 );
@@ -1404,7 +1421,7 @@ screen_rotate screen_rotate
 	.FB_VBL(FB_VBL),
 	.FB_LL(FB_LL),
 	.DDRAM_CLK(DDRAM_CLK),
-	.DDRAM_BUSY(DDRAM_BUSY),
+	.DDRAM_BUSY(DDRAM_BUSY | dl_own),   // M26: held off while the fast-load replay owns the port
 	.DDRAM_BURSTCNT(sr_burstcnt),
 	.DDRAM_ADDR(sr_addr),
 	.DDRAM_DIN(sr_din),
@@ -1414,13 +1431,42 @@ screen_rotate screen_rotate
 );
 assign FB_EN = sr_fb_en;
 assign FB_FORCE_BLANK = 1'b0;
-// DDR3: the flipper while it is flipping or finishing a transaction, else screen_rotate
-assign DDRAM_BURSTCNT = flip_ddr ? fl_burstcnt : sr_burstcnt;
-assign DDRAM_ADDR     = flip_ddr ? fl_addr     : sr_addr;
-assign DDRAM_DIN      = flip_ddr ? fl_din      : sr_din;
-assign DDRAM_BE       = flip_ddr ? fl_be       : sr_be;
-assign DDRAM_WE       = flip_ddr ? fl_we       : sr_we;
-assign DDRAM_RD       = flip_ddr ? fl_rd       : sr_rd;
+// M26 fast ROM loading: MRA <rom index="0" address="0x31000000">. Main_MiSTer copies the assembled ROM
+// stream into DDR3 at byte 0x31000000 (clear of screen_rotate's 0x24000000-0x25FFFFFF and the flipper's
+// 0x30000000-0x300FFFFF) and nb1_ddr_load replays it into the ROM loader. It takes the port only between
+// the other masters' transactions and holds them off (busy) while it owns it.
+nb1_ddr_load #(.INDEX(IOCTL_ROM), .BASE(29'h0620_0000)) ddr_load
+(
+	.clk_sys(clk_sys),
+	.init(mem_init),
+	.ioctl_download(ioctl_download),
+	.ioctl_index(ioctl_index),
+	.ioctl_addr(ioctl_addr),
+	.ld_download(dl_download),
+	.ld_wr(dl_wr),
+	.ld_addr(dl_addr),
+	.ld_dout(dl_dout),
+	.ld_wait(ld_ioctl_wait),
+	.active(dl_active),
+	.busy(dl_busy),
+	.loads(),
+	.others_idle(!sr_rd && !sr_we && fl_idle),
+	.ddr_own(dl_own),
+	.ddr_busy(DDRAM_BUSY),
+	.ddr_burstcnt(dl_burstcnt),
+	.ddr_addr(dl_ddr_addr),
+	.ddr_rd(dl_rd),
+	.ddr_dout(DDRAM_DOUT),
+	.ddr_dout_ready(DDRAM_DOUT_READY)
+);
+// DDR3: the fast-load replay while it owns the port; else the flipper while it is flipping or finishing a
+// transaction; else screen_rotate
+assign DDRAM_BURSTCNT = dl_own ? dl_burstcnt : flip_ddr ? fl_burstcnt : sr_burstcnt;
+assign DDRAM_ADDR     = dl_own ? dl_ddr_addr : flip_ddr ? fl_addr     : sr_addr;
+assign DDRAM_DIN      = dl_own ? 64'd0       : flip_ddr ? fl_din      : sr_din;
+assign DDRAM_BE       = dl_own ? 8'hFF       : flip_ddr ? fl_be       : sr_be;
+assign DDRAM_WE       = dl_own ? 1'b0        : flip_ddr ? fl_we       : sr_we;
+assign DDRAM_RD       = dl_own ? dl_rd       : flip_ddr ? fl_rd       : sr_rd;
 
 // Disk LED: on while a ROM stream is being written.
 assign LED_DISK = {1'b0, rom_loading};

@@ -50,6 +50,10 @@ PLATFORM_MAP = [
 ]
 STREAM_END = 0x1804020
 IOCTL_ROM, IOCTL_BOARD, IOCTL_CHECK = 0, 2, 3
+# M26 fast loading: Main_MiSTer copies the assembled index-0 stream into DDR3 at this byte address and the
+# core replays it from there (rtl/nb1/nb1_ddr_load.sv, BASE = this / 8); clear of screen_rotate
+# (0x24000000-0x25FFFFFF) and the native flip (0x30000000-0x300FFFFF).
+DDR_LOAD_ADDR = 0x31000000
 IOCTL_NVRAM, NVRAM_BYTES = 1, 2048   # M18: EEPROM 28C16 image (rtl/nb1/nb1_nvram.sv)
 RBF = 'Namco_NB1'
 MAX_ENTRIES = 32
@@ -462,7 +466,8 @@ def cmd_generate(a):
         L.append('    </rom>')
     L.append('    <nvram index="%d" size="%d"/>' % (IOCTL_NVRAM, NVRAM_BYTES))
     L.append('')
-    L.append('    <rom index="%d" zip="%s" md5="none">' % (IOCTL_ROM, zips))
+    L.append('    <!-- address: fast loading (Main_MiSTer puts the stream in DDR3; the core copies it to SDRAM) -->')
+    L.append('    <rom index="%d" zip="%s" md5="none" address="0x%08X">' % (IOCTL_ROM, zips, DDR_LOAD_ADDR))
     for name, rid, base, size, tag in PLATFORM_MAP:
         reg = regs.get(tag)
         L.append('        <!-- %s: stream 0x%07X-0x%07X, MAME region "%s" -->' % (name, base, base + size - 1, tag))
@@ -645,6 +650,11 @@ def cmd_validate(a):
         fail('rbf/setname')
     meta = {ld['name']: ld for r in game['regions'] for ld in r['loads']}
     rom0 = [r for r in root.findall('rom') if r.get('index') == str(IOCTL_ROM)][0]
+    # M26: the fast-loading DDR3 address equals the core's replay base (NB1.sv nb1_ddr_load .BASE, 64-bit words)
+    m = re.search(r"nb1_ddr_load\s*#\(.*?\.BASE\(29'h([0-9A-Fa-f_]+)\)", open(os.path.join(REPO, 'NB1.sv')).read(), re.S)
+    if not m or rom0.get('address') is None or int(rom0.get('address'), 0) != DDR_LOAD_ADDR        or int(m.group(1).replace('_', ''), 16) * 8 != DDR_LOAD_ADDR:
+        fail('index-0 address %r / NB1.sv nb1_ddr_load BASE do not match 0x%08X' % (rom0.get('address'), DDR_LOAD_ADDR))
+    checks += 1
     used = set()
     nvrom = [r for r in root.findall('rom') if r.get('index') == str(IOCTL_NVRAM)]
     for p in list(rom0.iter('part')) + [q for r in nvrom for q in r.iter('part')]:   # index 1: MAME "eeprom" default

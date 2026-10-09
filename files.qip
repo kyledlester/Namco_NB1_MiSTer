@@ -8,6 +8,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_video_timing.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_test_pattern.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_memory.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_rom_loader.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_ddr_load.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_rom_check.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_m2_overlay.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/nb1/nb1_cpu_ram.sv
